@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+// Variables
+$font:              "Montserrat Alternates", sans-serif;
+$bg:                #fbfbfb;
+$card-bg:           #f3f3f3;
+$input-bg:          #e8e8e8;
+$input-focus-bg:    #ffffff;
+$input-border:      transparent;
+$input-focus-border:#2e2eb8;
+$input-radius:      999px;
+$btn-primary:       #2e2eb8;
+$btn-primary-hover: #2929a3;
+$text-dark:         #111111;
+$text-muted:        #777777;
+$divider-color:     #bbbbbb;
+$card-radius:       28px;
+$card-shadow:       0 16px 48px rgba(0, 0, 0, 0.12);
+
+// Base
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font;
+  background: $bg;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// Outer wrapper
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  width: 100%;
+}
+
+// Card
+.login-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: $card-bg;
+  border-radius: $card-radius;
+  box-shadow: $card-shadow;
+  overflow: hidden;
+  width: 100%;
+  max-width: 860px;
+  min-height: 520px;
+
+  // Left panel
+  .left-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 32px;
+    background: $card-bg;
+
+    img {
+      width: 100%;
+      max-width: 320px;
+      height: auto;
+      object-fit: contain;
+      user-select: none;
+      pointer-events: none;
+    }
+  }
+
+  // Right panel
+  .right-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 52px 48px;
+
+    // Title
+    .page-title {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: $text-dark;
+      margin-bottom: 28px;
+      letter-spacing: -0.3px;
+    }
+
+    // Input rows
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: $input-bg;
+      border: 2px solid $input-border;
+      border-radius: $input-radius;
+      padding: 13px 20px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s ease, background 0.2s ease,
+      box-shadow 0.2s ease;
+
+      svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: #666;
+      }
+
+      input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        font-family: $font;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: $text-dark;
+
+        &::placeholder {
+          color: #999;
+          font-weight: 500;
+        }
+      }
+
+      &:focus-within {
+        border-color: $input-focus-border;
+        background: $input-focus-bg;
+        box-shadow: 0 0 0 4px rgba(45, 45, 224, 0.1);
+      }
+    }
+
+    // Forgot password
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 22px;
+      margin-top: -4px;
+
+      .forgot-link {
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: $text-muted;
+        text-decoration: none;
+        transition: color 0.2s;
+
+        &:hover {
+          color: $btn-primary;
+        }
+      }
+    }
+
+    // Login button
+    .login-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 300px;
+      margin: 0 auto 26px;
+      padding: 14px 28px;
+      background: $btn-primary;
+      color: #ffffff;
+      border: none;
+      border-radius: $input-radius;
+      font-family: $font;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(45, 45, 224, 0.35);
+      transition: background 0.2s ease, transform 0.15s ease,
+      box-shadow 0.2s ease;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      &:hover {
+        background: $btn-primary-hover;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(45, 45, 224, 0.45);
+      }
+
+      &:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(45, 45, 224, 0.3);
+      }
+    }
+
+    // Divider
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background: $divider-color;
+      }
+
+      .divider-text {
+        font-size: 0.72rem;
+        font-weight: 500;
+        color: $text-muted;
+        white-space: nowrap;
+        letter-spacing: 0.3px;
+      }
+    }
+
+    // Social buttons
+    .social-row {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+
+      .social-btn {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: $input-bg;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s ease, transform 0.15s ease,
+        box-shadow 0.2s ease;
+
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        &:hover {
+          background: #ffffff;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+      }
+    }
+  }
+}
+
+// Register link
+.register-text {
+  font-size: 0.85rem;
+  color: $text-muted;
+  font-weight: 400;
+
+  .register-link {
+    color: $text-dark;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1.5px solid $text-dark;
+    padding-bottom: 1px;
+    transition: color 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+      color: $btn-primary;
+      border-color: $btn-primary;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .login-container {
+    grid-template-columns: 1fr;
+
+    .left-panel {
+      display: none;
+    }
+
+    .right-panel {
+      padding: 40px 28px;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+  }
+}
