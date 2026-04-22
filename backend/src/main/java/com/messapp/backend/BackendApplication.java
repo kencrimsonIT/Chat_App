@@ -1,4 +1,4 @@
-package com.messapp.backend.util;
+package com.messapp.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
