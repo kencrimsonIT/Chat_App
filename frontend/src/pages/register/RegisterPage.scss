@@ -2,7 +2,6 @@
 
 // Variables
 $font:              "Montserrat Alternates", sans-serif;
-$bg:                #fbfbfb;
 $card-bg:           #f3f3f3;
 $input-bg:          #e8e8e8;
 $input-focus-bg:    #ffffff;
@@ -12,6 +11,7 @@ $input-radius:      999px;
 $btn-primary:       #2e2eb8;
 $btn-primary-hover: #2929a3;
 $text-dark:         #111111;
+$text-light:         #ffffff;
 $text-muted:        #777777;
 $divider-color:     #bbbbbb;
 $card-radius:       28px;
@@ -26,7 +26,7 @@ $card-shadow:       0 16px 48px rgba(0, 0, 0, 0.12);
 
 body {
   font-family: $font;
-  background: $bg;
+  background: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -43,6 +43,18 @@ body {
   width: 100%;
 }
 
+// Fade-in animation
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 // Card
 .register-container {
   display: grid;
@@ -54,6 +66,7 @@ body {
   width: 100%;
   max-width: 860px;
   min-height: 520px;
+  animation: fadeIn 0.5s ease forwards;
 
   // Left panel
   .left-panel {
@@ -177,14 +190,16 @@ body {
 // Login Link
 .to-login-text {
   font-size: 0.85rem;
-  color: $text-muted;
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 400;
+  animation: fadeIn 0.5s ease 0.2s forwards;
+  opacity: 0;
 
   .to-login-link {
-    color: $text-dark;
+    color: $text-light;
     font-weight: 700;
     text-decoration: none;
-    border-bottom: 1.5px solid $text-dark;
+    border-bottom: 1.5px solid $text-light;
     padding-bottom: 1px;
     transition: color 0.2s ease, border-color 0.2s ease;
 
