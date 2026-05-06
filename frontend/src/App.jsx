@@ -3,6 +3,8 @@ import LoginPage from "./pages/login/LoginPage";
 import RegisterPage from "./pages/register/RegisterPage";
 import ForgotPasswordPage from "./pages/password-recovery/ForgotPasswordPage";
 import RecoveryPasswordPage from "./pages/password-recovery/RecoveryPasswordPage";
+import ProfilePage from "./pages/profile/ProfilePage";
+import "./App.scss";
 
 const App = () => {
   return (
@@ -12,6 +14,7 @@ const App = () => {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password/:token" element={<RecoveryPasswordPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
         </Routes>
     </Router>
   );
