@@ -4,13 +4,16 @@ import './LoginPage.scss';
 import chat from "../../assets/images/chat.png";
 import { User, Lock, LogIn } from 'lucide-react';
 import {SiGoogle,  SiFacebook, SiX} from "@icons-pack/react-simple-icons";
+import useLogin from "../../hooks/useLogin";
 
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
-    const handleLogin = () => {
+    const {login, loading, error} = useLogin();
 
+    const handleLogin = () => {
+        login(username, password);
     }
 
     return (
@@ -23,14 +26,19 @@ const LoginPage = () => {
 
                 {/*Right Panel*/}
                 <div className="right-panel">
-                    <h1 className="page-title">Đăng nhập</h1>
+                    <h1 className="page-title">Đăng nhập</h1>
+
+                    {/*Error Message*/}
+                    {error && (
+                        <p className="error-message">{error}</p>
+                    )}
 
                     {/*Username*/}
                     <div className="input-row">
                         <User />
                         <input
                             type="text"
-                            placeholder="Tên đăng nhập"
+                            placeholder="Tên đăng nhập"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                         />
@@ -41,7 +49,7 @@ const LoginPage = () => {
                         <Lock />
                         <input
                             type="password"
-                            placeholder="Mật khẩu"
+                            placeholder="Mật khẩu"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
@@ -49,19 +57,23 @@ const LoginPage = () => {
 
                     {/*Forgot password?*/}
                     <div className="forgot-row">
-                        <Link to="/forgot-password" className="forgot-link">Quên mật khẩu?</Link>
+                        <Link to="/forgot-password" className="forgot-link">Quên mật khẩu?</Link>
                     </div>
 
                     {/*Submit*/}
-                    <button className="login-btn" onClick={handleLogin}>
-                        Đăng nhập
-                        <LogIn />
+                    <button
+                        className="login-btn"
+                        onClick={handleLogin}
+                        disabled={loading}
+                    >
+                        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
+                        {!loading && <LogIn />}
                     </button>
 
                     {/*Divider*/}
                     <div className="divider">
                         <div className="divider-line" />
-                        <span className="divider-text">Hoặc đăng nhập với</span>
+                        <span className="divider-text">Hoặc đăng nhập với</span>
                         <div className="divider-line" />
                     </div>
 
@@ -82,7 +94,7 @@ const LoginPage = () => {
 
             {/*Register Page Linking*/}
             <p className="register-text">
-                Chưa có tài khoản? <Link to="/register" className="register-link">Tạo tài khoản</Link>
+                Chưa có tài khoản? <Link to="/register" className="register-link">Tạo tài khoản</Link>
             </p>
         </div>
     );
