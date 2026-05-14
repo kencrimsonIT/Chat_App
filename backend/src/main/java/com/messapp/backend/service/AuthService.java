@@ -69,7 +69,7 @@ public class AuthService {
 
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtTokenProvider.getUsernameFromToken(savedUser.getUsername());
+        String accessToken = jwtTokenProvider.generateTokenFromUsername(savedUser.getUsername());
         String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.getUsername());
 
         refreshTokenRepository.deleteByUser(user);
@@ -164,7 +164,7 @@ public class AuthService {
             throw new IllegalArgumentException("Mật khẩu hiện tại không đúng");
         }
 
-        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getNewPassword())) {
+        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmNewPassword())) {
             throw new IllegalArgumentException("Vui lòng nhập khớp mật khẩu mới");
         }
 
