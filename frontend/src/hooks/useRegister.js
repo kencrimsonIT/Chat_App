@@ -32,7 +32,7 @@ const useRegister = () => {
             localStorage.setItem("username", data.username);
             localStorage.setItem("email", data.email);
 
-            navigate("/");
+            navigate("/chat");
         } catch (err) {
             const message = err.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
             setError(message);

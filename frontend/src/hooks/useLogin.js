@@ -23,8 +23,13 @@ const useLogin = () => {
             localStorage.setItem("userId", data.userId);
             localStorage.setItem("username", data.username);
             localStorage.setItem("email", data.email);
+            localStorage.setItem("roles", JSON.stringify(data.roles));
 
-            navigate("/");
+            if (data.roles.includes("ROLE_ADMIN")) {
+                navigate("/dashboard");
+            } else {
+                navigate("/chat");
+            }
         } catch (err) {
             const message = err.response?.data?.message || "Đăng nhập thất bại. Vui lòng thử lại.";
             setError(message);
