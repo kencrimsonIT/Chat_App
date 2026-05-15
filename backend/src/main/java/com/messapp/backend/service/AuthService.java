@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -119,6 +120,9 @@ public class AuthService {
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .message("Đăng nhập thành công")
+                .roles(user.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet()))
                 .build();
     }
 
