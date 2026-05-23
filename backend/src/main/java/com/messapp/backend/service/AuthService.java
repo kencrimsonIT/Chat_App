@@ -1,15 +1,18 @@
 package com.messapp.backend.service;
 
 import com.messapp.backend.dto.*;
+import com.messapp.backend.entity.PasswordResetToken;
 import com.messapp.backend.entity.RefreshToken;
 import com.messapp.backend.entity.Role;
 import com.messapp.backend.entity.User;
 import com.messapp.backend.exception.ResourceNotFoundException;
+import com.messapp.backend.repository.PasswordResetTokenRepository;
 import com.messapp.backend.repository.RefreshTokenRepository;
 import com.messapp.backend.repository.RoleRepository;
 import com.messapp.backend.repository.UserRepository;
 import com.messapp.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,10 +42,19 @@ public class AuthService {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     public AuthResponse register(RegisterRequest registerRequest) {
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
@@ -178,26 +191,29 @@ public class AuthService {
     }
 
     public void forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
-        User user = userRepository.findByEmail(forgotPasswordRequest.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+        User user = userRepository.findByEmail(forgotPasswordRequest.getEmail()).orElseThrow(null);
+        if (user == null) return;
 
-        String resetToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
+        String resetToken = UUID.randomUUID().toString();
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
-        refreshToken.setToken(resetToken);
-        refreshToken.setExpiryDate(LocalDateTime.now().plusMinutes(45));
-        refreshTokenRepository.save(refreshToken);
+        passwordResetTokenRepository.deleteByUser(user);
 
-        //TODO: Send reset password email with token
+        PasswordResetToken passwordResetToken = new PasswordResetToken();
+        passwordResetToken.setUser(user);
+        passwordResetToken.setToken(resetToken);
+        passwordResetToken.setExpiryDate(LocalDateTime.now().plusMinutes(45));
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        String resetLink = frontendUrl + "/recovery-password?token=" + resetToken;
+        emailService.sendResetPasswordEmail(user.getEmail(), resetLink);
     }
 
     public void resetPassword(ResetPasswordRequest resetPasswordRequest) {
-        RefreshToken refreshToken = refreshTokenRepository.findByToken(resetPasswordRequest.getToken())
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(resetPasswordRequest.getToken())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy reset token"));
 
-        if (refreshToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            refreshTokenRepository.delete(refreshToken);
+        if (resetToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken);
             throw new IllegalArgumentException("Reset token đã hết hạn");
         }
 
@@ -205,12 +221,12 @@ public class AuthService {
             throw new IllegalArgumentException("Vui lòng nhập khớp mật khẩu của bạn");
         }
 
-        User user = refreshToken.getUser();
+        User user = resetToken.getUser();
 
         user.setPassword(passwordEncoder.encode(resetPasswordRequest.getNewPassword()));
         user.setUpdatedAt(LocalDateTime.now());
         userRepository.save(user);
 
-        refreshTokenRepository.delete(refreshToken);
+        passwordResetTokenRepository.delete(resetToken);
     }
 }
