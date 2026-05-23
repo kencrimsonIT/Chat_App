@@ -1,14 +1,22 @@
 import React, {useState} from "react";
+import {useSearchParams} from "react-router-dom";
 import ShieldCheck from "../../assets/images/8182940.png";
 import "./RecoveryPasswordPage.scss";
 import {Lock, SquareCheckBig, CheckCheck} from "lucide-react";
+import useResetPassword from "../../hooks/useResetPassword";
 
 const RecoveryPasswordPage = () => {
+    const [searchParams] = useSearchParams();
+    const token = searchParams.get("token");
+
     const [newPassword, setNewPassword]= useState("");
     const [confirmNewPassword, setConfirmNewPassword]= useState("");
 
-    const resetPassword = () => {
+    const {resetPassword: executeReset, loading, error, message} = useResetPassword();
 
+    const handleReset = () => {
+        if (!newPassword || !confirmNewPassword || !token) return;
+        executeReset(token, newPassword, confirmNewPassword);
     }
 
     return (
@@ -17,6 +25,10 @@ const RecoveryPasswordPage = () => {
                 <img src={ShieldCheck} alt="" />
 
                 <h1 className="page-title">Đặt lại mật khẩu</h1>
+
+                {/*Feedback Messages*/}
+                {error && <p className="error-message" style={{color: 'red', marginBottom: '10px'}}>{error}</p>}
+                {message && <p className="success-message" style={{color: 'green', marginBottom: '10px'}}>{message}</p>}
 
                 {/*New Password*/}
                 <div className="input-row">
@@ -41,9 +53,13 @@ const RecoveryPasswordPage = () => {
                 </div>
 
                 {/*Reset Button*/}
-                <button className="reset-btn" onClick={resetPassword}>
-                    Xác nhận
-                    <CheckCheck />
+                <button 
+                    className="reset-btn" 
+                    onClick={handleReset}
+                    disabled={loading}
+                >
+                    {loading ? "Đang xác nhận..." : "Xác nhận"}
+                    {!loading && <CheckCheck />}
                 </button>
             </div>
         </div>

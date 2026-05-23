@@ -3,12 +3,15 @@ import "./ForgotPasswordPage.scss";
 import LockPassword from "../../assets/images/5321806.png";
 import {Mail, Forward} from "lucide-react";
 import {Link} from "react-router-dom";
+import useForgotPassword from "../../hooks/useForgotPassword";
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("");
+    const {forgotPassword, loading, error, message} = useForgotPassword();
 
-    const sendEmail = (email) => {
-
+    const sendEmail = () => {
+        if (!email) return;
+        forgotPassword(email);
     }
 
     return (
@@ -17,6 +20,10 @@ const ForgotPasswordPage = () => {
                 <img src={LockPassword} alt="" />
 
                 <h1 className="page-title">Quên mật khẩu?</h1>
+
+                {/*Feedback Messages*/}
+                {error && <p className="error-message" style={{color: 'red', marginBottom: '10px'}}>{error}</p>}
+                {message && <p className="success-message" style={{color: 'green', marginBottom: '10px'}}>{message}</p>}
 
                 {/*Email*/}
                 <div className="input-row">
@@ -30,9 +37,13 @@ const ForgotPasswordPage = () => {
                 </div>
 
                 {/*Send Button*/}
-                <button className="send-btn" onClick={sendEmail}>
-                    Gửi
-                    <Forward />
+                <button 
+                    className="send-btn" 
+                    onClick={sendEmail}
+                    disabled={loading}
+                >
+                    {loading ? "Đang gửi..." : "Gửi"}
+                    {!loading && <Forward />}
                 </button>
             </div>
 
