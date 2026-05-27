@@ -26,6 +26,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.web.client.RestTemplate;
+import java.util.Map;
+import java.util.Optional;
+
 @Service
 @Transactional
 public class AuthService {
@@ -55,6 +59,62 @@ public class AuthService {
 
     @Value("${app.frontend.url}")
     private String frontendUrl;
+
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    public AuthResponse googleLogin(GoogleLoginRequest request) {
+        String url = "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + request.getAccessToken();
+        Map<String, Object> payload = restTemplate.getForObject(url, Map.class);
+
+        if (payload == null || payload.containsKey("error")) {
+            throw new IllegalArgumentException("Google Access Token không hợp lệ");
+        }
+
+        String email = (String) payload.get("email");
+        String name = (String) payload.get("name");
+        String picture = (String) payload.get("picture");
+
+        User user = userRepository.findByEmail(email).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setUsername(email.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 5));
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Ngẫu nhiên vì login bằng google
+            newUser.setFullName(name);
+            newUser.setAvatarUrl(picture);
+            newUser.setActive(true);
+
+            Role client = roleRepository.findByName("ROLE_CLIENT")
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ROLE_CLIENT"));
+            Set<Role> roles = new HashSet<>();
+            roles.add(client);
+            newUser.setRoles(roles);
+
+            return userRepository.save(newUser);
+        });
+
+        String accessToken = jwtTokenProvider.generateTokenFromUsername(user.getUsername());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
+
+        refreshTokenRepository.deleteByUser(user);
+
+        RefreshToken refreshTokenObject = new RefreshToken();
+        refreshTokenObject.setUser(user);
+        refreshTokenObject.setToken(refreshToken);
+        refreshTokenObject.setExpiryDate(LocalDateTime.now().plusDays(8));
+        refreshTokenRepository.save(refreshTokenObject);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .message("Đăng nhập bằng Google thành công")
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
+                .build();
+    }
 
     public AuthResponse register(RegisterRequest registerRequest) {
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
