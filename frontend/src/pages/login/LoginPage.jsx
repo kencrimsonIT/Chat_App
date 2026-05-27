@@ -3,14 +3,26 @@ import {Link} from "react-router-dom";
 import './LoginPage.scss';
 import chat from "../../assets/images/chat.png";
 import { User, Lock, LogIn } from 'lucide-react';
-import {SiGoogle,  SiFacebook, SiX} from "@icons-pack/react-simple-icons";
+import {SiGoogle,  SiFacebook} from "@icons-pack/react-simple-icons";
+import { useGoogleLogin as useGoogleOAuth } from '@react-oauth/google';
 import useLogin from "../../hooks/useLogin";
+import useGoogleLogin from "../../hooks/useGoogleLogin";
 
 const LoginPage = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     const {login, loading, error} = useLogin();
+    const {googleLogin, loading: googleLoading, error: googleError} = useGoogleLogin();
+
+    const loginWithGoogle = useGoogleOAuth({
+        onSuccess: tokenResponse => {
+            googleLogin(tokenResponse.access_token);
+        },
+        onError: () => {
+            console.log('Google Login Failed');
+        },
+    });
 
     const handleLogin = () => {
         login(username, password);
@@ -29,8 +41,8 @@ const LoginPage = () => {
                     <h1 className="page-title">Đăng nhập</h1>
 
                     {/*Error Message*/}
-                    {error && (
-                        <p className="error-message">{error}</p>
+                    {(error || googleError) && (
+                        <p className="error-message">{error || googleError}</p>
                     )}
 
                     {/*Username*/}
@@ -64,10 +76,10 @@ const LoginPage = () => {
                     <button
                         className="login-btn"
                         onClick={handleLogin}
-                        disabled={loading}
+                        disabled={loading || googleLoading}
                     >
-                        {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-                        {!loading && <LogIn />}
+                        {(loading || googleLoading) ? "Đang xử lý..." : "Đăng nhập"}
+                        {!(loading || googleLoading) && <LogIn />}
                     </button>
 
                     {/*Divider*/}
@@ -79,14 +91,18 @@ const LoginPage = () => {
 
                     {/*Third party login*/}
                     <div className="social-row">
-                        <button className="social-btn" title="Google">
+                        <button 
+                            className="social-btn" 
+                            title="Google"
+                            onClick={() => loginWithGoogle()}
+                            disabled={googleLoading}
+                        >
                             <SiGoogle color="#CC0000" />
+                            <span>Google</span>
                         </button>
                         <button className="social-btn" title="Facebook">
                             <SiFacebook color="#0866FF" />
-                        </button>
-                        <button className="social-btn" title="XTwitter">
-                            <SiX color="#000000" />
+                            <span>Facebook</span>
                         </button>
                     </div>
                 </div>
