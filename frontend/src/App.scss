@@ -3,11 +3,34 @@
 // Variables
 $font: "Montserrat Alternates", sans-serif;
 
+:root {
+  --bg-gradient: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
+  --text-color: #ffffff;
+}
+
+.dark {
+  --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  --text-color: #e0e0e0;
+}
+
+.light {
+  --bg-gradient: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
+  --text-color: #ffffff;
+}
+
 body {
+  margin: 0;
+  padding: 0;
   font-family: $font;
-  background: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
+}
+
+.app-container {
+  font-family: $font;
+  background: var(--bg-gradient);
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-color);
+  transition: background 0.3s ease, color 0.3s ease;
 }
