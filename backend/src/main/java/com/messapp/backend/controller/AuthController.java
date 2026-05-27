@@ -28,6 +28,12 @@ public class AuthController {
         return new ResponseEntity<>(authResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(@RequestBody GoogleLoginRequest googleLoginRequest) {
+        AuthResponse authResponse = authService.googleLogin(googleLoginRequest);
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         AuthResponse response = authService.refreshToken(refreshTokenRequest);
