@@ -1,10 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { MessageCircle, ShieldCheck, Zap, LogIn, UserPlus } from 'lucide-react';
+import { useDispatch, useSelector } from "react-redux";
+import { MessageCircle, ShieldCheck, Zap, LogIn, UserPlus, Sun, Moon } from 'lucide-react';
+import { toggleTheme } from "../../redux/slices/themeSlice";
 import "./HomePage.scss";
 import chatHero from "../../assets/images/chat-hero.png";
 
 const HomePage = () => {
+    const dispatch = useDispatch();
+    const darkMode = useSelector((state) => state.theme.darkMode);
+
     return (
         <div className="home-container">
             {/* Navigation */}
@@ -14,6 +19,13 @@ const HomePage = () => {
                     <span>MessApp</span>
                 </div>
                 <div className="nav-links">
+                    <button 
+                        className="theme-toggle" 
+                        onClick={() => dispatch(toggleTheme())}
+                        title={darkMode ? "Chuyển sang chế độ sáng" : "Chuyển sang chế độ tối"}
+                    >
+                        {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
                     <Link to="/login" className="nav-btn login">
                         <LogIn size={18} />
                         <span>Đăng nhập</span>
