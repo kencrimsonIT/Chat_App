@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
     @Autowired
     private AuthService authService;
@@ -66,6 +65,12 @@ public class AuthController {
     public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) {
         authService.resetPassword(resetPasswordRequest);
         return new ResponseEntity<>("Password reset successfully", HttpStatus.OK);
+    }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return new ResponseEntity<>("Email verified successfully. You can now login.", HttpStatus.OK);
     }
 
 }
