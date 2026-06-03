@@ -83,6 +83,11 @@ $danger-color: #ef4444;
                     text-decoration: none;
                     transition: all 0.3s ease;
                     margin-bottom: 5px;
+                    background: transparent;
+                    border: none;
+                    width: 100%;
+                    cursor: pointer;
+                    text-align: left;
 
                     &:hover {
                         background: rgba(255, 255, 255, 0.1);
@@ -97,6 +102,7 @@ $danger-color: #ef4444;
 
                     span {
                         font-weight: 500;
+                        font-size: 0.95rem;
                     }
                 }
             }
@@ -396,6 +402,7 @@ $danger-color: #ef4444;
 
                                 &.admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
                                 &.user { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+                                &.client { background: rgba(16, 185, 129, 0.2); color: #10b981; }
                             }
 
                             .status-indicator {
@@ -413,6 +420,45 @@ $danger-color: #ef4444;
                                 &.online .dot { background: #10b981; box-shadow: 0 0 10px #10b981; }
                                 &.offline .dot { background: #6b7280; }
                                 &.away .dot { background: #f59e0b; }
+                            }
+
+                            .actions-cell {
+                                display: flex;
+                                gap: 10px;
+
+                                .revoke-btn {
+                                    background: rgba(239, 68, 68, 0.1);
+                                    color: #ef4444;
+                                    border: 1px solid rgba(239, 68, 68, 0.2);
+                                    padding: 6px 12px;
+                                    border-radius: 6px;
+                                    font-size: 0.8rem;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+
+                                    &:hover {
+                                        background: #ef4444;
+                                        color: #fff;
+                                    }
+                                }
+
+                                .grant-btn {
+                                    background: rgba(16, 185, 129, 0.1);
+                                    color: #10b981;
+                                    border: 1px solid rgba(16, 185, 129, 0.2);
+                                    padding: 6px 12px;
+                                    border-radius: 6px;
+                                    font-size: 0.8rem;
+                                    font-weight: 600;
+                                    cursor: pointer;
+                                    transition: all 0.2s ease;
+
+                                    &:hover {
+                                        background: #10b981;
+                                        color: #fff;
+                                    }
+                                }
                             }
 
                             .action-btn {
