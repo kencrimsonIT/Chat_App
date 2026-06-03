@@ -1,6 +1,7 @@
 package com.messapp.backend.service.admin;
 
 import com.messapp.backend.dto.admin.AdminAssignRequest;
+import com.messapp.backend.dto.admin.UserDTO;
 import com.messapp.backend.entity.Role;
 import com.messapp.backend.entity.User;
 import com.messapp.backend.exception.ResourceNotFoundException;
@@ -10,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @Transactional
 public class AdminService {
@@ -18,6 +22,22 @@ public class AdminService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    public List<UserDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> UserDTO.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .avatarUrl(user.getAvatarUrl())
+                        .isActive(user.isActive())
+                        .roles(user.getRoles().stream()
+                                .map(Role::getName)
+                                .collect(Collectors.toSet()))
+                        .build())
+                .collect(Collectors.toList());
+    }
 
     public void assignAdminRole(AdminAssignRequest request) {
         User user = userRepository.findById(request.getUserId())
