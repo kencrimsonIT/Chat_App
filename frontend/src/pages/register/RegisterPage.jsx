@@ -11,10 +11,26 @@ const RegisterPage = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const {register, loading, error} = useRegister();
+    const {register, loading, error, success} = useRegister();
 
     const handleRegister = () => {
         register(username, email, password, confirmPassword);
+    }
+
+    if (success) {
+        return (
+            <div className="container">
+                <div className="register-container success-state">
+                    <div className="status-card">
+                        <SquareCheckBig size={64} color="#10b981" />
+                        <h1>Đăng ký thành công!</h1>
+                        <p>Chúng tôi đã gửi một email xác nhận đến <strong>{email}</strong>.</p>
+                        <p>Vui lòng kiểm tra hộp thư (và cả hòm thư rác) để kích hoạt tài khoản của bạn trước khi đăng nhập.</p>
+                        <Link to="/login" className="to-login-btn">Quay lại Đăng nhập</Link>
+                    </div>
+                </div>
+            </div>
+        );
     }
 
     return (
