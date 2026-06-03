@@ -42,4 +42,31 @@ public class EmailService {
             throw new RuntimeException("Lỗi khi gửi email: " + e.getMessage());
         }
     }
+
+    public void sendVerificationEmail(String toEmail, String verificationLink) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(toEmail);
+            helper.setSubject("Xác nhận tài khoản - MessApp");
+
+            String content = "<h3>Chào mừng bạn đến với MessApp!</h3>"
+                    + "<p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng nhấn vào liên kết bên dưới để xác nhận email và kích hoạt tài khoản của bạn:</p>"
+                    + "<p><a href=\"" + verificationLink + "\" style=\"background-color: #3b82f6; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;\">Xác nhận tài khoản</a></p>"
+                    + "<br>"
+                    + "<p>Nếu liên kết trên không hoạt động, bạn có thể sao chép và dán URL sau vào trình duyệt:</p>"
+                    + "<p>" + verificationLink + "</p>"
+                    + "<br>"
+                    + "<p>Lưu ý: Liên kết này sẽ hết hạn sau 24 giờ.</p>"
+                    + "<p>Nếu bạn không thực hiện đăng ký này, vui lòng bỏ qua email này.</p>"
+                    + "<p>Trân trọng,<br>Đội ngũ MessApp</p>";
+
+            helper.setText(content, true);
+
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Lỗi khi gửi email xác nhận: " + e.getMessage());
+        }
+    }
 }

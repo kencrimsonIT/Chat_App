@@ -1,15 +1,13 @@
 package com.messapp.backend.service;
 
 import com.messapp.backend.dto.*;
-import com.messapp.backend.entity.PasswordResetToken;
-import com.messapp.backend.entity.RefreshToken;
-import com.messapp.backend.entity.Role;
-import com.messapp.backend.entity.User;
+import com.messapp.backend.entity.*;
 import com.messapp.backend.exception.ResourceNotFoundException;
 import com.messapp.backend.repository.PasswordResetTokenRepository;
 import com.messapp.backend.repository.RefreshTokenRepository;
 import com.messapp.backend.repository.RoleRepository;
 import com.messapp.backend.repository.UserRepository;
+import com.messapp.backend.repository.VerificationTokenRepository;
 import com.messapp.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +42,9 @@ public class AuthService {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private VerificationTokenRepository verificationTokenRepository;
 
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
@@ -133,35 +134,48 @@ public class AuthService {
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setActive(true);
+        user.setActive(false); // Set inactive until email verified
 
         Role client = roleRepository.findByName("ROLE_CLIENT")
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm tháy người dùng"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lỗi hệ thống: Không tìm thấy vai trò ROLE_CLIENT"));
         Set<Role> roles = new HashSet<>();
         roles.add(client);
         user.setRoles(roles);
 
         User savedUser = userRepository.save(user);
 
-        String accessToken = jwtTokenProvider.generateTokenFromUsername(savedUser.getUsername());
-        String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.getUsername());
+        // Send verification email
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = new VerificationToken(savedUser, token);
+        verificationTokenRepository.save(verificationToken);
 
-        refreshTokenRepository.deleteByUser(user);
-
-        RefreshToken refreshTokenObject = new RefreshToken();
-        refreshTokenObject.setUser(user);
-        refreshTokenObject.setToken(refreshToken);
-        refreshTokenObject.setExpiryDate(LocalDateTime.now().plusDays(8));
-        refreshTokenRepository.save(refreshTokenObject);
+        String verificationLink = frontendUrl + "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(savedUser.getEmail(), verificationLink);
 
         return AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userId(user.getId())
-                .username(user.getUsername())
-                .email(user.getEmail())
-                .message("Bạn đã đăng ký thành công")
+                .userId(savedUser.getId())
+                .username(savedUser.getUsername())
+                .email(savedUser.getEmail())
+                .message("Bạn đã đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản.")
                 .build();
+    }
+
+    public void verifyEmail(String token) {
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Mã xác thực không hợp lệ."));
+
+        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            verificationTokenRepository.delete(verificationToken);
+            throw new IllegalArgumentException("Mã xác thực đã hết hạn.");
+        }
+
+        User user = userRepository.findById(verificationToken.getUser().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại."));
+        
+        user.setActive(true);
+        userRepository.save(user);
+
+        verificationTokenRepository.delete(verificationToken);
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
