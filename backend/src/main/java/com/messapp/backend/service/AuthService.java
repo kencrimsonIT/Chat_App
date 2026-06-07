@@ -7,7 +7,6 @@ import com.messapp.backend.repository.PasswordResetTokenRepository;
 import com.messapp.backend.repository.RefreshTokenRepository;
 import com.messapp.backend.repository.RoleRepository;
 import com.messapp.backend.repository.UserRepository;
-import com.messapp.backend.repository.VerificationTokenRepository;
 import com.messapp.backend.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,9 +41,6 @@ public class AuthService {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
-
-    @Autowired
-    private VerificationTokenRepository verificationTokenRepository;
 
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
@@ -82,7 +78,7 @@ public class AuthService {
             newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString())); // Ngẫu nhiên vì login bằng google
             newUser.setFullName(name);
             newUser.setAvatarUrl(picture);
-            newUser.setActive(true);
+            newUser.setIsActive(true);
 
             Role client = roleRepository.findByName("ROLE_CLIENT")
                     .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ROLE_CLIENT"));
@@ -130,52 +126,43 @@ public class AuthService {
             throw new IllegalArgumentException("Email đã tồn tại");
         }
 
+        User savedUser = saveUser(registerRequest);
+
+        String accessToken = jwtTokenProvider.generateTokenFromUsername(savedUser.getUsername());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(savedUser.getUsername());
+
+        RefreshToken refreshTokenObject = new RefreshToken();
+        refreshTokenObject.setUser(savedUser);
+        refreshTokenObject.setToken(refreshToken);
+        refreshTokenObject.setExpiryDate(LocalDateTime.now().plusDays(8));
+        refreshTokenRepository.save(refreshTokenObject);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(savedUser.getId())
+                .username(savedUser.getUsername())
+                .email(savedUser.getEmail())
+                .message("Đăng ký và đăng nhập thành công")
+                .roles(savedUser.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
+                .build();
+    }
+
+    @Transactional
+    public User saveUser(RegisterRequest registerRequest) {
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setActive(false); // Set inactive until email verified
+        user.setIsActive(true); 
 
         Role client = roleRepository.findByName("ROLE_CLIENT")
                 .orElseThrow(() -> new ResourceNotFoundException("Lỗi hệ thống: Không tìm thấy vai trò ROLE_CLIENT"));
-        Set<Role> roles = new HashSet<>();
-        roles.add(client);
-        user.setRoles(roles);
+        user.setRoles(Set.of(client));
 
-        User savedUser = userRepository.save(user);
-
-        // Send verification email
-        String token = UUID.randomUUID().toString();
-        VerificationToken verificationToken = new VerificationToken(savedUser, token);
-        verificationTokenRepository.save(verificationToken);
-
-        String verificationLink = frontendUrl + "/verify-email?token=" + token;
-        emailService.sendVerificationEmail(savedUser.getEmail(), verificationLink);
-
-        return AuthResponse.builder()
-                .userId(savedUser.getId())
-                .username(savedUser.getUsername())
-                .email(savedUser.getEmail())
-                .message("Bạn đã đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản.")
-                .build();
-    }
-
-    public void verifyEmail(String token) {
-        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException("Mã xác thực không hợp lệ."));
-
-        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
-            verificationTokenRepository.delete(verificationToken);
-            throw new IllegalArgumentException("Mã xác thực đã hết hạn.");
-        }
-
-        User user = userRepository.findById(verificationToken.getUser().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại."));
-        
-        user.setActive(true);
-        userRepository.save(user);
-
-        verificationTokenRepository.delete(verificationToken);
+        return userRepository.save(user);
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
