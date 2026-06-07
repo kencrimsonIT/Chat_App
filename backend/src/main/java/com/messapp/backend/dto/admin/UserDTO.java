@@ -17,6 +17,7 @@ public class UserDTO {
     private String email;
     private String fullName;
     private String avatarUrl;
+    private String coverUrl;
     private boolean isActive;
     private Set<String> roles;
 }
