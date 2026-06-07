@@ -27,8 +27,8 @@ public class User {
     private String fullName;
     private String avatarUrl;
 
-    @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @Column(name = "is_active", nullable = false, columnDefinition = "tinyint(1) default 0")
+    private Boolean isActive;
 
     @Column(updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
