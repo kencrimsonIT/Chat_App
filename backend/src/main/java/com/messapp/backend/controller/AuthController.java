@@ -67,10 +67,4 @@ public class AuthController {
         return new ResponseEntity<>("Password reset successfully", HttpStatus.OK);
     }
 
-    @GetMapping("/verify-email")
-    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
-        authService.verifyEmail(token);
-        return new ResponseEntity<>("Email verified successfully. You can now login.", HttpStatus.OK);
-    }
-
 }
