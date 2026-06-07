@@ -10,15 +10,16 @@ import {
     Moon, 
     Search, 
     Bell,
-    UserPlus,
     Activity,
     Shield,
-    Loader2
+    Loader2,
+    RotateCw
 } from "lucide-react";
 import { toggleTheme } from "../../../redux/slices/themeSlice";
 import "./DashboardPage.scss";
 import defaultPfp from "../../../assets/images/default-pfp.jpg";
 import adminService from "../../../services/adminService";
+import useLogout from "../../../hooks/useLogout";
 
 const DashboardPage = () => {
     const [activeTab, setActiveTab] = useState("overview");
@@ -28,6 +29,7 @@ const DashboardPage = () => {
     
     const dispatch = useDispatch();
     const darkMode = useSelector((state) => state.theme.darkMode);
+    const { logout, loading: logoutLoading } = useLogout();
 
     useEffect(() => {
         if (activeTab === "users") {
@@ -115,9 +117,13 @@ const DashboardPage = () => {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <button className="logout-btn">
+                    <button 
+                        className="logout-btn" 
+                        onClick={logout}
+                        disabled={logoutLoading}
+                    >
                         <LogOut size={20} />
-                        <span>Đăng xuất</span>
+                        <span>{logoutLoading ? "Đang đăng xuất..." : "Đăng xuất"}</span>
                     </button>
                 </div>
             </aside>
@@ -210,9 +216,13 @@ const DashboardPage = () => {
                         <div className="content-card">
                             <div className="card-header">
                                 <h2>Danh sách người dùng</h2>
-                                <button className="btn-primary">
-                                    <UserPlus size={18} />
-                                    Thêm người dùng
+                                <button 
+                                    className="btn-primary" 
+                                    onClick={fetchUsers}
+                                    disabled={loading}
+                                >
+                                    <RotateCw size={18} className={loading ? "animate-spin" : ""} />
+                                    Tải lại
                                 </button>
                             </div>
                             
@@ -290,9 +300,6 @@ const DashboardPage = () => {
                                     </table>
                                 </div>
                             )}
-                            <div className="card-footer">
-                                <button className="view-all-btn">Xem tất cả người dùng</button>
-                            </div>
                         </div>
                     )}
                 </div>
