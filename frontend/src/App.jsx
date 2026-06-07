@@ -34,7 +34,7 @@ const App = () => {
             <Route path="/chat" element={<ChatPage />} />
 
             {/*Admin side*/}
-            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<DashboardPage />} />
           </Routes>
         </Router>
       </div>
