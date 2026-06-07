@@ -25,7 +25,10 @@ public class User {
     private String email;
 
     private String fullName;
+    private String phone;
+    private String location;
     private String avatarUrl;
+    private String coverUrl;
 
     @Column(name = "is_active", nullable = false, columnDefinition = "tinyint(1) default 0")
     private Boolean isActive;
