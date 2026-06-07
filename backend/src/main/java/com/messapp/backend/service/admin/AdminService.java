@@ -31,6 +31,7 @@ public class AdminService {
                         .email(user.getEmail())
                         .fullName(user.getFullName())
                         .avatarUrl(user.getAvatarUrl())
+                        .coverUrl(user.getCoverUrl())
                         .isActive(user.getIsActive())
                         .roles(user.getRoles().stream()
                                 .map(Role::getName)
