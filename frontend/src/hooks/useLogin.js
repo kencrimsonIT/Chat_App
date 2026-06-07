@@ -26,7 +26,7 @@ const useLogin = () => {
             localStorage.setItem("roles", JSON.stringify(data.roles));
 
             if (data.roles.includes("ROLE_ADMIN")) {
-                navigate("/dashboard");
+                navigate("/admin");
             } else {
                 navigate("/chat");
             }
