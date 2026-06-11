@@ -7,6 +7,7 @@ import {SiGoogle,  SiFacebook} from "@icons-pack/react-simple-icons";
 import { useGoogleLogin as useGoogleOAuth } from '@react-oauth/google';
 import useLogin from "../../hooks/useLogin";
 import useGoogleLogin from "../../hooks/useGoogleLogin";
+import useFacebookLogin from "../../hooks/useFacebookLogin";
 
 const LoginPage = () => {
     const [username, setUsername] = useState("");
@@ -14,6 +15,26 @@ const LoginPage = () => {
 
     const {login, loading, error} = useLogin();
     const {googleLogin, loading: googleLoading, error: googleError} = useGoogleLogin();
+    const {facebookLogin, loading: facebookLoading, error: facebookError} = useFacebookLogin();
+
+    React.useEffect(() => {
+        window.fbAsyncInit = function() {
+            window.FB.init({
+                appId      : '1476093347069280',
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v21.0'
+            });
+        };
+
+        (function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/en_US/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    }, []);
 
     const loginWithGoogle = useGoogleOAuth({
         onSuccess: tokenResponse => {
@@ -23,6 +44,18 @@ const LoginPage = () => {
             console.log('Google Login Failed');
         },
     });
+
+    const handleFacebookLogin = () => {
+        if (window.FB) {
+            window.FB.login((response) => {
+                if (response.authResponse) {
+                    facebookLogin(response.authResponse.accessToken);
+                } else {
+                    console.log('User cancelled login or did not fully authorize.');
+                }
+            }, { scope: 'public_profile,email' });
+        }
+    };
 
     const handleLogin = () => {
         login(username, password);
@@ -41,8 +74,8 @@ const LoginPage = () => {
                     <h1 className="page-title">Đăng nhập</h1>
 
                     {/*Error Message*/}
-                    {(error || googleError) && (
-                        <p className="error-message">{error || googleError}</p>
+                    {(error || googleError || facebookError) && (
+                        <p className="error-message">{error || googleError || facebookError}</p>
                     )}
 
                     {/*Username*/}
@@ -76,10 +109,10 @@ const LoginPage = () => {
                     <button
                         className="login-btn"
                         onClick={handleLogin}
-                        disabled={loading || googleLoading}
+                        disabled={loading || googleLoading || facebookLoading}
                     >
-                        {(loading || googleLoading) ? "Đang xử lý..." : "Đăng nhập"}
-                        {!(loading || googleLoading) && <LogIn />}
+                        {(loading || googleLoading || facebookLoading) ? "Đang xử lý..." : "Đăng nhập"}
+                        {!(loading || googleLoading || facebookLoading) && <LogIn />}
                     </button>
 
                     {/*Divider*/}
@@ -95,12 +128,17 @@ const LoginPage = () => {
                             className="social-btn" 
                             title="Google"
                             onClick={() => loginWithGoogle()}
-                            disabled={googleLoading}
+                            disabled={googleLoading || facebookLoading}
                         >
                             <SiGoogle color="#CC0000" />
                             <span>Google</span>
                         </button>
-                        <button className="social-btn" title="Facebook">
+                        <button 
+                            className="social-btn" 
+                            title="Facebook"
+                            onClick={handleFacebookLogin}
+                            disabled={googleLoading || facebookLoading}
+                        >
                             <SiFacebook color="#0866FF" />
                             <span>Facebook</span>
                         </button>
