@@ -33,6 +33,12 @@ public class AuthController {
         return new ResponseEntity<>(authResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/facebook")
+    public ResponseEntity<AuthResponse> facebookLogin(@RequestBody FacebookLoginRequest facebookLoginRequest) {
+        AuthResponse authResponse = authService.facebookLogin(facebookLoginRequest);
+        return new ResponseEntity<>(authResponse, HttpStatus.OK);
+    }
+
     @PostMapping("/refresh-token")
     public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         AuthResponse response = authService.refreshToken(refreshTokenRequest);
