@@ -115,6 +115,78 @@ public class AuthService {
                 .build();
     }
 
+    public AuthResponse facebookLogin(FacebookLoginRequest request) {
+        String url = "https://graph.facebook.com/me?fields=id,name,email,picture&access_token=" + request.getAccessToken();
+        Map<String, Object> payload = restTemplate.getForObject(url, Map.class);
+
+        if (payload == null || payload.containsKey("error")) {
+            throw new IllegalArgumentException("Facebook Access Token không hợp lệ");
+        }
+
+        String email = (String) payload.get("email");
+        String name = (String) payload.get("name");
+        String picture = null;
+
+        if (payload.containsKey("picture")) {
+            Map<String, Object> pictureObj = (Map<String, Object>) payload.get("picture");
+            if (pictureObj.containsKey("data")) {
+                Map<String, Object> dataObj = (Map<String, Object>) pictureObj.get("data");
+                picture = (String) dataObj.get("url");
+            }
+        }
+
+        if (email == null) {
+            email = payload.get("id") + "@facebook.com";
+        }
+
+        final String finalEmail = email;
+        final String finalName = name;
+        final String finalPicture = picture;
+
+        User user = userRepository.findByEmail(finalEmail).orElseGet(() -> {
+            User newUser = new User();
+            newUser.setEmail(finalEmail);
+            newUser.setUsername(finalEmail.split("@")[0] + "_" + UUID.randomUUID().toString().substring(0, 5));
+            newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+            newUser.setFullName(finalName);
+            newUser.setAvatarUrl(finalPicture);
+            newUser.setIsActive(true);
+
+            Role client = roleRepository.findByName("ROLE_CLIENT")
+                    .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy ROLE_CLIENT"));
+            Set<Role> roles = new HashSet<>();
+            roles.add(client);
+            newUser.setRoles(roles);
+
+            return userRepository.save(newUser);
+        });
+
+        String accessToken = jwtTokenProvider.generateTokenFromUsername(user.getUsername());
+        String refreshToken = jwtTokenProvider.generateRefreshToken(user.getUsername());
+
+        refreshTokenRepository.deleteByUser(user);
+
+        RefreshToken refreshTokenObject = new RefreshToken();
+        refreshTokenObject.setUser(user);
+        refreshTokenObject.setToken(refreshToken);
+        refreshTokenObject.setExpiryDate(LocalDateTime.now().plusDays(8));
+        refreshTokenRepository.save(refreshTokenObject);
+
+        return AuthResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
+                .coverUrl(user.getCoverUrl())
+                .message("Đăng nhập bằng Facebook thành công")
+                .roles(user.getRoles().stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
+                .build();
+    }
+
     public AuthResponse register(RegisterRequest registerRequest) {
         if (!registerRequest.getPassword().equals(registerRequest.getConfirmPassword())) {
             throw new IllegalArgumentException("Mật khẩu không khớp");
