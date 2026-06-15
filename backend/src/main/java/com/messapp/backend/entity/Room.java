@@ -2,26 +2,31 @@ package com.messapp.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "rooms")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Room {
-    public enum Role {ADMIN, MEMBER}
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
-    private User user;
+    private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role")
-    private Role role = Role.MEMBER;
+    private RoomType type;
 
-    private LocalDateTime joinedAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    public enum RoomType {
+        PRIVATE, GROUP
+    }
 }
