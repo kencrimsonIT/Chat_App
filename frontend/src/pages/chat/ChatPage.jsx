@@ -1,52 +1,110 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import ChatSidebar from "../../components/chat/ChatSidebar";
 import ChatWindow from "../../components/chat/ChatWindow";
 import "./ChatPage.scss";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
+import chatService from "../../services/chatService";
+import { connectWebSocket, subscribeToRoom, sendChatMessage, disconnectWebSocket } from "../../websocket/socket";
 
 const ChatPage = () => {
     const darkMode = useSelector((state) => state.theme.darkMode);
     const [activeChatId, setActiveChatId] = useState(null);
+    const [conversations, setConversations] = useState([]);
+    const [messages, setMessages] = useState([]);
+    const [socketConnected, setSocketConnected] = useState(false);
+    
+    const userId = localStorage.getItem("userId");
+    const username = localStorage.getItem("username");
+    const subscriptionRef = useRef(null);
 
-    // Mock conversations data
-    const [conversations] = useState([
-        { id: 1, name: "Kent Paul", lastMessage: "Chào bạn, hôm nay thế nào?", time: "10:30 AM", unread: 2, online: true, avatar: defaultPfp },
-        { id: 2, name: "Nhóm Dự Án", lastMessage: "Đã cập nhật tài liệu mới nhé.", time: "Hôm qua", unread: 0, online: false, avatar: null },
-        { id: 3, name: "Trần Anh", lastMessage: "Ok, hẹn gặp sau.", time: "Thứ 2", unread: 0, online: true, avatar: defaultPfp },
-        { id: 4, name: "Linh Chi", lastMessage: "Bạn gửi cho mình file thiết kế với.", time: "Thứ 2", unread: 5, online: false, avatar: null },
-    ]);
+    // Initial load: Fetch rooms and connect WebSocket
+    useEffect(() => {
+        fetchRooms();
+        connectWebSocket(() => {
+            setSocketConnected(true);
+        });
 
-    // Mock messages data
-    const [allMessages, setAllMessages] = useState({
-        1: [
-            { text: "Chào bạn!", time: "10:25 AM", senderId: "them", senderAvatar: defaultPfp },
-            { text: "Chào bạn, hôm nay thế nào?", time: "10:30 AM", senderId: "them", senderAvatar: defaultPfp },
-        ],
-        2: [
-            { text: "Chào mọi người", time: "9:00 AM", senderId: "me", senderAvatar: defaultPfp },
-            { text: "Đã cập nhật tài liệu mới nhé.", time: "9:05 AM", senderId: "them", senderAvatar: defaultPfp },
-        ]
-    });
+        return () => {
+            disconnectWebSocket();
+        };
+    }, []);
+
+    // Handle room selection and history loading
+    useEffect(() => {
+        if (activeChatId) {
+            fetchHistory(activeChatId);
+            
+            // Re-subscribe when active chat changes
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+            }
+            
+            if (socketConnected) {
+                subscriptionRef.current = subscribeToRoom(activeChatId, (newMessage) => {
+                    setMessages(prev => {
+                        // Avoid duplicates if message was already added via local update (optional)
+                        if (prev.find(m => m.id === newMessage.id)) return prev;
+                        return [...prev, newMessage];
+                    });
+                });
+            }
+        }
+    }, [activeChatId, socketConnected]);
+
+    const fetchRooms = async () => {
+        try {
+            const rooms = await chatService.getMyRooms();
+            // Map Room entity to conversation format expected by Sidebar
+            const formattedRooms = rooms.map(room => ({
+                id: room.id,
+                name: room.name || `Phòng ${room.id}`,
+                lastMessage: "...", // Could be fetched from backend later
+                time: room.createdAt ? new Date(room.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
+                unread: 0,
+                online: false,
+                avatar: null
+            }));
+            setConversations(formattedRooms);
+        } catch (err) {
+            console.error("Failed to fetch rooms", err);
+        }
+    };
+
+    const fetchHistory = async (roomId) => {
+        try {
+            const history = await chatService.getChatHistory(roomId);
+            // Reverse because backend returns Descending order (newest first)
+            setMessages(history.reverse());
+        } catch (err) {
+            console.error("Failed to fetch chat history", err);
+        }
+    };
 
     const activeChat = conversations.find(c => c.id === activeChatId);
-    const currentMessages = allMessages[activeChatId] || [];
 
     const handleSendMessage = (text) => {
-        if (!activeChatId) return;
+        if (!activeChatId || !socketConnected) return;
         
-        const newMessage = {
-            text,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            senderId: "me",
-            senderAvatar: defaultPfp
+        const messageDTO = {
+            roomId: activeChatId,
+            senderId: userId,
+            senderUsername: username,
+            content: text,
+            type: "TEXT"
         };
 
-        setAllMessages(prev => ({
-            ...prev,
-            [activeChatId]: [...(prev[activeChatId] || []), newMessage]
-        }));
+        sendChatMessage(messageDTO);
     };
+
+    // Transform messages to the format expected by MessageItem (UI adapts)
+    const formattedMessages = messages.map(msg => ({
+        id: msg.id,
+        text: msg.content,
+        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        senderId: msg.senderId.toString() === userId.toString() ? "me" : "them",
+        senderAvatar: defaultPfp // In real app, this would come from msg or a user map
+    }));
 
     return (
         <div className={`chat-page-container ${darkMode ? "dark-theme" : ""}`}>
@@ -58,7 +116,7 @@ const ChatPage = () => {
                 />
                 <ChatWindow 
                     activeChat={activeChat}
-                    messages={currentMessages}
+                    messages={formattedMessages}
                     onSendMessage={handleSendMessage}
                 />
             </div>
