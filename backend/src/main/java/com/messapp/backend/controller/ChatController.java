@@ -1,6 +1,6 @@
 package com.messapp.backend.controller;
 
-import com.messapp.backend.dto.MessageDTO;
+import com.messapp.backend.dto.chat.MessageDTO;
 import com.messapp.backend.service.ChatService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
