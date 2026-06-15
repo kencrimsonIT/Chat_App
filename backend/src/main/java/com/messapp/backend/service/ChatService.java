@@ -1,7 +1,7 @@
 package com.messapp.backend.service;
 
 import com.messapp.backend.document.Message;
-import com.messapp.backend.dto.MessageDTO;
+import com.messapp.backend.dto.chat.MessageDTO;
 import com.messapp.backend.repository.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
