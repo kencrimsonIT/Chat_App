@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Search, MoreVertical, MessageSquare, Users, Settings } from "lucide-react";
+import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus } from "lucide-react";
 import ConversationItem from "./ConversationItem";
 import FriendsList from "../common/FriendsList";
 import FriendRequestList from "../common/FriendRequestList";
 import friendshipService from "../../services/friendshipService";
+import AddFriendModal from "../common/AddFriendModal";
 
 const ChatSidebar = ({ conversations, activeId, onSelect, onRoomCreated }) => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -12,6 +13,7 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onRoomCreated }) => {
     // States quản lý danh bạ
     const [friends, setFriends] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
+    const [showAddFriendModal, setShowAddFriendModal] = useState(false);
 
     // Fetch dữ liệu danh bạ khi người dùng chuyển sang tab Liên hệ
     useEffect(() => {
@@ -69,6 +71,12 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onRoomCreated }) => {
                 <div className="header-top">
                     <h1>{activeTab === "chat" ? "Tin nhắn" : activeTab === "contacts" ? "Danh bạ" : "Cài đặt"}</h1>
                     <div className="header-actions">
+                        {/* Nút bật Modal thêm bạn bè (Chỉ hiện khi ở tab Danh bạ) */}
+                        {activeTab === "contacts" && (
+                            <button className="icon-btn" onClick={() => setShowAddFriendModal(true)}>
+                                <UserPlus size={20} />
+                            </button>
+                        )}
                         <button className="icon-btn"><MoreVertical size={20} /></button>
                     </div>
                 </div>
@@ -150,6 +158,10 @@ const ChatSidebar = ({ conversations, activeId, onSelect, onRoomCreated }) => {
                     </button>
                 </nav>
             </div>
+
+            {showAddFriendModal && (
+                <AddFriendModal onClose={() => setShowAddFriendModal(false)} />
+            )}
         </aside>
     );
 };
