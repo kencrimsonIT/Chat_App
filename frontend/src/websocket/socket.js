@@ -28,6 +28,16 @@ export const connectWebSocket = (onConnected) => {
     stompClient.activate();
 };
 
+export const subscribeToFriendshipNotifications = (userId, onNotificationReceived) => {
+    if (!stompClient || !stompClient.connected) return null;
+
+    return stompClient.subscribe(`/topic/friendship/${userId}`, (message) => {
+        if (message.body) {
+            onNotificationReceived(JSON.parse(message.body));
+        }
+    });
+};
+
 export const subscribeToRoom = (roomId, onMessageReceived) => {
     if (!stompClient || !stompClient.connected) return null;
     
