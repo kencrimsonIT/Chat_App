@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus } from "lucide-react";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import ConversationItem from "./ConversationItem";
 import FriendsList from "../common/FriendsList";
 import FriendRequestList from "../common/FriendRequestList";
@@ -8,7 +9,7 @@ import AddFriendModal from "../common/AddFriendModal";
 import { connectWebSocket, subscribeToFriendshipNotifications } from "../../websocket/socket";
 
 // Bổ sung prop `currentUser` để lấy ID đăng ký kênh thông báo
-const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCreated }) => {
+const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCreated, isLoadingConversations }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("chat"); // 'chat' hoặc 'contacts' hoặc 'settings'
 
@@ -17,19 +18,28 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
     const [pendingRequests, setPendingRequests] = useState([]);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
 
+    // State quản lý skeleton loading
+    const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+
     // Fetch dữ liệu danh bạ khi người dùng chuyển sang tab Liên hệ
     useEffect(() => {
         if (activeTab === "contacts") {
             const loadContacts = async () => {
+                setIsLoadingContacts(true);
                 try {
+                    const artificialDelay = new Promise(resolve => setTimeout(resolve, 800));
+
                     const [friendsData, pendingData] = await Promise.all([
                         friendshipService.getFriends(),
-                        friendshipService.getPendingRequests()
+                        friendshipService.getPendingRequests(),
+                        artificialDelay
                     ]);
                     setFriends(friendsData);
                     setPendingRequests(pendingData);
                 } catch (error) {
                     console.error("Lỗi khi tải danh bạ:", error);
+                } finally {
+                    setIsLoadingContacts(false);
                 }
             };
             loadContacts();
@@ -128,14 +138,12 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
     );
 
     return (
-        <>
+        <SkeletonTheme baseColor="#e4e6eb" highlightColor="#f2f3f5" duration={1.5}>
             <aside className="chat-sidebar">
-                {/* Header */}
                 <div className="sidebar-header">
                     <div className="header-top">
                         <h1>{activeTab === "chat" ? "Tin nhắn" : activeTab === "contacts" ? "Danh bạ" : "Cài đặt"}</h1>
                         <div className="header-actions">
-                            {/* Nút bật Modal thêm bạn bè (Chỉ hiện khi ở tab Danh bạ) */}
                             {activeTab === "contacts" && (
                                 <button className="icon-btn" onClick={() => setShowAddFriendModal(true)}>
                                     <UserPlus size={20} />
@@ -144,7 +152,6 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
                             <button className="icon-btn"><MoreVertical size={20} /></button>
                         </div>
                     </div>
-
                     <div className="search-bar">
                         <Search size={18} className="search-icon" />
                         <input
@@ -156,11 +163,28 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
                     </div>
                 </div>
 
-                {/* Content thay đổi động theo activeTab */}
                 <div className="sidebar-content">
                     {activeTab === "chat" && (
                         <div className="conversations-list">
-                            {filteredConversations.length > 0 ? (
+                            {isLoadingConversations ? (
+                                // Hiển thị 6 skeleton item cho tab Trò chuyện
+                                Array(6).fill(0).map((_, i) => (
+                                    <div key={i} className="conversation-item">
+                                        <div className="avatar-wrapper">
+                                            <Skeleton circle width={48} height={48} />
+                                        </div>
+                                        <div className="content" style={{ flex: 1, marginLeft: 12 }}>
+                                            <div className="header" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <Skeleton width={120} />
+                                                <Skeleton width={40} />
+                                            </div>
+                                            <div className="footer">
+                                                <Skeleton width="80%" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : filteredConversations.length > 0 ? (
                                 filteredConversations.map(conv => (
                                     <ConversationItem
                                         key={conv.id}
@@ -177,17 +201,23 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
 
                     {activeTab === "contacts" && (
                         <div className="contacts-tab-wrapper">
-                            {/* Render Lờ mời kết bạn */}
-                            <FriendRequestList
-                                pendingRequests={pendingRequests}
-                                onAccept={handleAccept}
-                                onDecline={handleDecline}
-                            />
-                            {/* Render Danh sách bạn bè */}
-                            <FriendsList
-                                friends={friends}
-                                onStartChat={handleStartChat}
-                            />
+                            {isLoadingContacts ? (
+                                // Hiển thị Skeleton cho tab Liên hệ
+                                <div style={{ padding: '0 16px' }}>
+                                    <Skeleton width={150} height={20} style={{ margin: '16px 0' }} />
+                                    {Array(8).fill(0).map((_, i) => (
+                                        <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: 15 }}>
+                                            <Skeleton circle width={45} height={45} />
+                                            <Skeleton width={180} style={{ marginLeft: 12 }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <>
+                                    <FriendRequestList pendingRequests={pendingRequests} onAccept={handleAccept} onDecline={handleDecline} />
+                                    <FriendsList friends={friends} onStartChat={handleStartChat} />
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -196,39 +226,23 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
                     )}
                 </div>
 
-                {/* Footer Navigation */}
                 <div className="sidebar-footer">
                     <nav className="bottom-nav">
-                        <button
-                            className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('chat')}
-                        >
-                            <MessageSquare size={20} />
-                            <span>Trò chuyện</span>
+                        <button className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => setActiveTab('chat')}>
+                            <MessageSquare size={20} /><span>Trò chuyện</span>
                         </button>
-                        <button
-                            className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('contacts')}
-                        >
-                            <Users size={20} />
-                            <span>Liên hệ</span>
+                        <button className={`nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
+                            <Users size={20} /><span>Liên hệ</span>
                         </button>
-                        <button
-                            className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('settings')}
-                        >
-                            <Settings size={20} />
-                            <span>Cài đặt</span>
+                        <button className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+                            <Settings size={20} /><span>Cài đặt</span>
                         </button>
                     </nav>
                 </div>
             </aside>
 
-            {/* Modal nằm ngang hàng với aside, không bị ảnh hưởng bởi CSS của sidebar */}
-            {showAddFriendModal && (
-                <AddFriendModal onClose={() => setShowAddFriendModal(false)} />
-            )}
-        </>
+            {showAddFriendModal && <AddFriendModal onClose={() => setShowAddFriendModal(false)} />}
+        </SkeletonTheme>
     );
 };
 
