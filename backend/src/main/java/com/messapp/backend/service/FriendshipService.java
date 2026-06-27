@@ -24,6 +24,9 @@ public class FriendshipService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private RoomService roomService;
+
     // Send friend request
     public Friendship sendFriendRequest(Long senderId, Long receiverId) {
         User sender = userRepository.findById(senderId)
@@ -52,9 +55,18 @@ public class FriendshipService {
     public Friendship acceptFriendRequest(Long friendshipId) {
         Friendship friendship = friendshipRepository.findById(friendshipId)
                 .orElseThrow(() -> new ResourceNotFoundException("Friendship not found"));
+
         friendship.setStatus(Friendship.FriendshipStatus.ACCEPTED);
         friendship.setUpdatedAt(LocalDateTime.now());
-        return friendshipRepository.save(friendship);
+
+        Friendship savedFriendship = friendshipRepository.save(friendship);
+
+        roomService.createPrivateRoom(
+                savedFriendship.getSender().getId(),
+                savedFriendship.getReceiver().getId()
+        );
+
+        return savedFriendship;
     }
 
     // Decline friend request
