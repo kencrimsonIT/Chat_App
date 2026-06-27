@@ -12,15 +12,16 @@ const getChatHistory = async (roomId, page = 0, size = 20) => {
     return response.data;
 };
 
-const createPrivateRoom = async (targetUserId) => {
-    const response = await axiosInstance.post(`/rooms/private/${targetUserId}`);
+const getPrivateRoom = async (targetUserId) => {
+    const response = await axiosInstance.get(`/rooms/private/${targetUserId}`);
     return response.data;
 };
 
 const chatService = {
     getMyRooms,
     getChatHistory,
-    createPrivateRoom,
+    getPrivateRoom,
+    createPrivateRoom: getPrivateRoom
 };
 
 export default chatService;
