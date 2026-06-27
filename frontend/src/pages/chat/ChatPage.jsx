@@ -33,6 +33,7 @@ const ChatPage = () => {
     // Handle room selection and history loading
     useEffect(() => {
         if (activeChatId) {
+            setMessages([]);
             fetchHistory(activeChatId);
             
             // Re-subscribe when active chat changes
@@ -81,6 +82,38 @@ const ChatPage = () => {
         }
     };
 
+    const handleStartChatWithFriend = async (friend) => {
+        try {
+            const targetId = typeof friend === 'object' ? friend.id : friend;
+            const friendName = typeof friend === 'object' ? (friend.fullName || friend.username) : `Phòng chat`;
+            const friendAvatar = typeof friend === 'object' ? friend.avatarUrl : null;
+
+            // Tạo mới hoặc lấy lại Private Room giữa 2 người
+            const room = await chatService.getPrivateRoom(targetId);
+
+            // Kiểm tra xem phòng này đã hiển thị ở Sidebar chưa, nếu chưa thì thêm vào
+            setConversations(prev => {
+                const isExist = prev.some(c => c.id === room.id);
+                if (isExist) return prev;
+
+                return [...prev, {
+                    id: room.id,
+                    name: room.name || friendName,
+                    avatar: friendAvatar,
+                    lastMessage: "Bắt đầu cuộc trò chuyện",
+                    time: "",
+                    unread: 0,
+                    online: true
+                }];
+            });
+
+            // Chuyển màn hình sang phòng chat vừa mở
+            setActiveChatId(room.id);
+        } catch (err) {
+            console.error("Không thể mở phòng trò chuyện:", err);
+        }
+    };
+
     const activeChat = conversations.find(c => c.id === activeChatId);
 
     const handleSendMessage = (text) => {
@@ -101,7 +134,7 @@ const ChatPage = () => {
     const formattedMessages = messages.map(msg => ({
         id: msg.id,
         text: msg.content,
-        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
         senderId: msg.senderId.toString() === userId.toString() ? "me" : "them",
         senderAvatar: defaultPfp // In real app, this would come from msg or a user map
     }));
@@ -113,6 +146,7 @@ const ChatPage = () => {
                     conversations={conversations} 
                     activeId={activeChatId}
                     onSelect={setActiveChatId}
+                    onStartChat={handleStartChatWithFriend}
                 />
                 <ChatWindow 
                     activeChat={activeChat}
