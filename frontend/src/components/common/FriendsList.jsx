@@ -20,7 +20,7 @@ const FriendList = ({ friends, onStartChat }) => {
                                     <p className="status-text">Active</p>
                                 </div>
                             </div>
-                            <button className="icon-btn" onClick={() => onStartChat(friend.id)}>
+                            <button className="icon-btn" onClick={() => onStartChat(friend)}>
                                 <MessageSquare size={18} />
                             </button>
                         </li>
