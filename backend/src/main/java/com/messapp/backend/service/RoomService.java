@@ -28,16 +28,30 @@ public class RoomService {
     private UserRepository userRepository;
 
     public Room createPrivateRoom(Long user1Id, Long user2Id) {
-        // Check if private room already exists between these two users
-        // For simplicity, we create a new one here or you could implement logic to find existing
-        
+        User user1 = userRepository.findById(user1Id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user2 = userRepository.findById(user2Id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Get user1's chat rooms
+        List<Room> user1Rooms = roomMemberRepository.findByUser(user1).stream()
+                .map(RoomMember::getRoom)
+                .collect(Collectors.toList());
+
+        // Check private room where user2 is also a member
+        for (Room room : user1Rooms) {
+            if (room.getType() == Room.RoomType.PRIVATE) {
+                boolean isUser2InRoom = roomMemberRepository.findByUser(user2).stream()
+                        .anyMatch(rm -> rm.getRoom().getId().equals(room.getId()));
+
+                if (isUser2InRoom) {
+                    return room;
+                }
+            }
+        }
+
         Room room = Room.builder()
                 .type(Room.RoomType.PRIVATE)
                 .build();
         room = roomRepository.save(room);
-
-        User user1 = userRepository.findById(user1Id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        User user2 = userRepository.findById(user2Id).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         roomMemberRepository.save(RoomMember.builder().room(room).user(user1).role(RoomMember.Role.ADMIN).build());
         roomMemberRepository.save(RoomMember.builder().room(room).user(user2).role(RoomMember.Role.MEMBER).build());
