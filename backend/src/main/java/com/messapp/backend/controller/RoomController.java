@@ -24,6 +24,15 @@ public class RoomController {
         return ResponseEntity.ok(roomService.getUserRooms(authentication.getName()));
     }
 
+    @GetMapping("/private/{friendId}")
+    public ResponseEntity<Room> getPrivateRoomWithFriend(
+            @PathVariable Long friendId,
+            Authentication authentication) {
+        com.messapp.backend.entity.User currentUser = userService.getUserByUsername(authentication.getName());
+        Room privateRoom = roomService.createPrivateRoom(currentUser.getId(), friendId);
+        return ResponseEntity.ok(privateRoom);
+    }
+
     @PostMapping("/private/{targetUserId}")
     public ResponseEntity<Room> createPrivateRoom(@PathVariable Long targetUserId, Authentication authentication) {
         com.messapp.backend.entity.User currentUser = userService.getUserByUsername(authentication.getName());
