@@ -9,7 +9,15 @@ import AddFriendModal from "../common/AddFriendModal";
 import { connectWebSocket, subscribeToFriendshipNotifications } from "../../websocket/socket";
 
 // Bổ sung prop `currentUser` để lấy ID đăng ký kênh thông báo
-const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCreated, isLoadingConversations }) => {
+const ChatSidebar = ({
+    currentUser,
+    conversations,
+    activeId,
+    onSelect,
+    onRoomCreated,
+    isLoadingConversations,
+    onStartChat
+}) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("chat"); // 'chat' hoặc 'contacts' hoặc 'settings'
 
@@ -215,7 +223,7 @@ const ChatSidebar = ({ currentUser, conversations, activeId, onSelect, onRoomCre
                             ) : (
                                 <>
                                     <FriendRequestList pendingRequests={pendingRequests} onAccept={handleAccept} onDecline={handleDecline} />
-                                    <FriendsList friends={friends} onStartChat={handleStartChat} />
+                                    <FriendsList friends={friends} onStartChat={onStartChat} />
                                 </>
                             )}
                         </div>
