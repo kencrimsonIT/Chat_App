@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Phone, Video, Info, MoreHorizontal, UserPlus } from "lucide-react";
+import { Info, MoreHorizontal, UserPlus } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import MessageItem from "./MessageItem";
 import ChatInput from "./ChatInput";
@@ -92,8 +92,6 @@ const ChatWindow = ({ activeChat, messages, onSendMessage, isLoading }) => {
                 </div>
 
                 <div className="header-actions">
-                    <button className="icon-btn"><Phone size={20} /></button>
-                    <button className="icon-btn"><Video size={20} /></button>
                     <button className="icon-btn"><UserPlus size={20} /></button>
                     <button className="icon-btn"><Info size={20} /></button>
                 </div>
