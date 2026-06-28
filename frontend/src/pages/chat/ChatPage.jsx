@@ -13,7 +13,7 @@ const ChatPage = () => {
     const [conversations, setConversations] = useState([]);
     const [messages, setMessages] = useState([]);
     const [socketConnected, setSocketConnected] = useState(false);
-    
+
     const userId = localStorage.getItem("userId");
     const username = localStorage.getItem("username");
     const subscriptionRef = useRef(null);
