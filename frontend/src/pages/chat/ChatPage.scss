@@ -58,6 +58,23 @@ $border-light: rgba(0, 0, 0, 0.05);
                 .name { color: #f8fafc; }
                 .last-message { color: #94a3b8; }
             }
+
+            .settings-tab-wrapper {
+                .settings-item {
+                    color: #f8fafc;
+                    &:hover {
+                        background: rgba(255, 255, 255, 0.05);
+                        color: $primary;
+                    }
+                    &.logout-btn {
+                        color: #ef4444;
+                        &:hover {
+                            background: rgba(239, 68, 68, 0.15);
+                            color: #ef4444;
+                        }
+                    }
+                }
+            }
         }
 
         .chat-window {
@@ -266,6 +283,52 @@ $border-light: rgba(0, 0, 0, 0.05);
                               &:hover { background: #ef4444; color: #fff; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); }
                             }
                         }
+                }
+            }
+        }
+
+        .settings-tab-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+            height: 100%;
+
+            .settings-item {
+                display: flex;
+                align-items: center;
+                padding: 12px 16px;
+                border: none;
+                background: transparent;
+                text-decoration: none;
+                color: #334155;
+                border-radius: 12px;
+                cursor: pointer;
+                width: 100%;
+                text-align: left;
+                transition: all 0.2s ease;
+                font-family: $font;
+
+                span {
+                    margin-left: 12px;
+                    font-size: 0.95rem;
+                    font-weight: 600;
+                }
+
+                &:hover {
+                    background: rgba(0, 0, 0, 0.05);
+                    color: $primary;
+                    transform: translateX(4px);
+                }
+
+                &.logout-btn {
+                    color: #ef4444;
+                    margin-top: auto;
+
+                    &:hover {
+                        background: rgba(239, 68, 68, 0.1);
+                        color: #ef4444;
+                    }
                 }
             }
         }
