@@ -11,7 +11,6 @@ import DashboardPage from "./pages/admin/dashboard/DashboardPage";
 import "./App.scss";
 import ChangePasswordPage from "./pages/change-password/ChangePasswordPage";
 import HomePage from "./pages/home/HomePage";
-import VerifyEmailPage from "./pages/register/VerifyEmailPage";
 
 const App = () => {
   const darkMode = useSelector((state) => state.theme.darkMode);
@@ -23,7 +22,6 @@ const App = () => {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/recovery-password" element={<RecoveryPasswordPage />} />
             <Route path="/profile" element={<ProfilePage />} />
