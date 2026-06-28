@@ -10,14 +10,13 @@ import { connectWebSocket, subscribeToFriendshipNotifications } from "../../webs
 
 // Bổ sung prop `currentUser` để lấy ID đăng ký kênh thông báo
 const ChatSidebar = ({
-    currentUser,
-    conversations,
-    activeId,
-    onSelect,
-    onRoomCreated,
-    isLoadingConversations,
-    onStartChat
-}) => {
+                         currentUser,
+                         conversations,
+                         activeId,
+                         onSelect,
+                         onRoomCreated,
+                         onStartChat
+                     }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("chat"); // 'chat' hoặc 'contacts' hoặc 'settings'
 
@@ -28,6 +27,18 @@ const ChatSidebar = ({
 
     // State quản lý skeleton loading
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+    const [isLoadingChats, setIsLoadingChats] = useState(true);
+
+    // Kích hoạt hiệu ứng skeleton loading cho tab Trò chuyện khi mount hoặc khi chuyển tab
+    useEffect(() => {
+        if (activeTab === "chat") {
+            setIsLoadingChats(true);
+            const timer = setTimeout(() => {
+                setIsLoadingChats(false);
+            }, 800);
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab]);
 
     // Fetch dữ liệu danh bạ khi người dùng chuyển sang tab Liên hệ
     useEffect(() => {
@@ -174,7 +185,7 @@ const ChatSidebar = ({
                 <div className="sidebar-content">
                     {activeTab === "chat" && (
                         <div className="conversations-list">
-                            {isLoadingConversations ? (
+                            {isLoadingChats ? (
                                 // Hiển thị 6 skeleton item cho tab Trò chuyện
                                 Array(6).fill(0).map((_, i) => (
                                     <div key={i} className="conversation-item">
