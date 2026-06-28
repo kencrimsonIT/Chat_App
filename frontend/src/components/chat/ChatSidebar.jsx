@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus } from "lucide-react";
+import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus, User, Key, Moon, Sun, Globe, LogOut } from "lucide-react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import ConversationItem from "./ConversationItem";
 import FriendsList from "../common/FriendsList";
@@ -7,6 +7,10 @@ import FriendRequestList from "../common/FriendRequestList";
 import friendshipService from "../../services/friendshipService";
 import AddFriendModal from "../common/AddFriendModal";
 import { connectWebSocket, subscribeToFriendshipNotifications } from "../../websocket/socket";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { toggleTheme } from "../../redux/slices/themeSlice";
+import useLogout from "../../hooks/useLogout";
 
 // Bổ sung prop `currentUser` để lấy ID đăng ký kênh thông báo
 const ChatSidebar = ({
@@ -24,6 +28,11 @@ const ChatSidebar = ({
     const [friends, setFriends] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
+
+    // States Redux & Hooks
+    const dispatch = useDispatch();
+    const darkMode = useSelector(state => state.theme?.darkMode);
+    const { logout } = useLogout();
 
     // State quản lý skeleton loading
     const [isLoadingContacts, setIsLoadingContacts] = useState(false);
@@ -241,7 +250,23 @@ const ChatSidebar = ({
                     )}
 
                     {activeTab === "settings" && (
-                        <div className="empty-state"><p>Giao diện cài đặt...</p></div>
+                        <div className="settings-tab-wrapper">
+                            <Link to="/profile" className="settings-item">
+                                <User size={20} /> <span>Hồ sơ</span>
+                            </Link>
+                            <Link to="/change-password" className="settings-item">
+                                <Key size={20} /> <span>Đổi mật khẩu</span>
+                            </Link>
+                            <button onClick={() => dispatch(toggleTheme())} className="settings-item">
+                                {darkMode ? <Sun size={20} /> : <Moon size={20} />} <span>Giao diện: {darkMode ? "Sáng" : "Tối"}</span>
+                            </button>
+                            <button className="settings-item">
+                                <Globe size={20} /> <span>Ngôn ngữ: Tiếng Việt</span>
+                            </button>
+                            <button onClick={logout} className="settings-item logout-btn">
+                                <LogOut size={20} /> <span>Đăng xuất</span>
+                            </button>
+                        </div>
                     )}
                 </div>
 
