@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus, User, Key, Moon, Sun, Globe, LogOut } from "lucide-react";
+import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus, User, Key, Moon, Sun, Globe, LogOut, Plus, Ban } from "lucide-react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import ConversationItem from "./ConversationItem";
 import FriendsList from "../common/FriendsList";
 import FriendRequestList from "../common/FriendRequestList";
+import BlockedUsersList from "../common/BlockedUsersList";
 import friendshipService from "../../services/friendshipService";
 import AddFriendModal from "../common/AddFriendModal";
+import CreateGroupModal from "./CreateGroupModal";
 import { connectWebSocket, subscribeToFriendshipNotifications } from "../../websocket/socket";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,7 +29,10 @@ const ChatSidebar = ({
     // States quản lý danh bạ
     const [friends, setFriends] = useState([]);
     const [pendingRequests, setPendingRequests] = useState([]);
+    const [blockedUsers, setBlockedUsers] = useState([]);
     const [showAddFriendModal, setShowAddFriendModal] = useState(false);
+    const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+    const [showBlockedList, setShowBlockedList] = useState(false);
 
     // States Redux & Hooks
     const dispatch = useDispatch();
@@ -49,7 +54,7 @@ const ChatSidebar = ({
         }
     }, [activeTab]);
 
-    // Fetch dữ liệu danh bạ khi người dùng chuyển sang tab Liên hệ
+    // Fetch dữ liệu danh bạ và danh sách chặn khi chuyển sang tab Liên hệ
     useEffect(() => {
         if (activeTab === "contacts") {
             const loadContacts = async () => {
@@ -57,13 +62,15 @@ const ChatSidebar = ({
                 try {
                     const artificialDelay = new Promise(resolve => setTimeout(resolve, 800));
 
-                    const [friendsData, pendingData] = await Promise.all([
+                    const [friendsData, pendingData, blockedData] = await Promise.all([
                         friendshipService.getFriends(),
                         friendshipService.getPendingRequests(),
+                        friendshipService.getBlockedUsers(),
                         artificialDelay
                     ]);
                     setFriends(friendsData);
                     setPendingRequests(pendingData);
+                    setBlockedUsers(blockedData);
                 } catch (error) {
                     console.error("Lỗi khi tải danh bạ:", error);
                 } finally {
@@ -122,6 +129,30 @@ const ChatSidebar = ({
                         console.error("Lỗi cập nhật danh sách bạn bè:", error);
                     }
                 }
+
+                // Xử lý khi bị chặn bởi người khác
+                if (notification.type === 'FRIEND_BLOCKED') {
+                    console.log("Bạn đã bị chặn bởi:", notification.senderFullName);
+                    // Chặn xóa người đó khỏi danh sách bạn bè tự động
+                    try {
+                        const updatedFriends = await friendshipService.getFriends();
+                        setFriends(updatedFriends);
+                    } catch (error) {
+                        console.error("Lỗi cập nhật danh sách bạn bè:", error);
+                    }
+                }
+
+                // Xử lý khi ai đó bỏ chặn mình
+                if (notification.type === 'FRIEND_UNBLOCKED') {
+                    console.log("Người dùng đã bỏ chặn bạn");
+                    // Refresh danh sách chặn (nếu đang hiển thị)
+                    try {
+                        const updatedBlocked = await friendshipService.getBlockedUsers();
+                        setBlockedUsers(updatedBlocked);
+                    } catch (error) {
+                        console.error("Lỗi cập nhật danh sách chặn:", error);
+                    }
+                }
             });
         };
 
@@ -156,6 +187,40 @@ const ChatSidebar = ({
         }
     };
 
+    const handleBlockUser = async (userId) => {
+        try {
+            await friendshipService.blockUser(userId);
+            // Refresh friends list and blocked list
+            const [updatedFriends, updatedBlocked] = await Promise.all([
+                friendshipService.getFriends(),
+                friendshipService.getBlockedUsers()
+            ]);
+            setFriends(updatedFriends);
+            setBlockedUsers(updatedBlocked);
+        } catch (error) {
+            console.error("Lỗi khi chặn người dùng:", error);
+            alert(error.response?.data?.message || "Không thể chặn người dùng này");
+        }
+    };
+
+    const handleUnblockUser = async (userId) => {
+        try {
+            await friendshipService.unblockUser(userId);
+            // Refresh blocked list
+            const updatedBlocked = await friendshipService.getBlockedUsers();
+            setBlockedUsers(updatedBlocked);
+        } catch (error) {
+            console.error("Lỗi khi bỏ chặn:", error);
+            alert(error.response?.data?.message || "Không thể bỏ chặn người dùng này");
+        }
+    };
+
+    const handleGroupCreated = (newGroup) => {
+        if (onRoomCreated) {
+            onRoomCreated(newGroup);
+        }
+    };
+
     const handleStartChat = async (targetUserId) => {
         // Xử lý tạo phòng chat riêng từ ID bạn bè (sử dụng chatService đã có của bạn)
     };
@@ -172,6 +237,11 @@ const ChatSidebar = ({
                     <div className="header-top">
                         <h1>{activeTab === "chat" ? "Tin nhắn" : activeTab === "contacts" ? "Danh bạ" : "Cài đặt"}</h1>
                         <div className="header-actions">
+                            {activeTab === "chat" && (
+                                <button className="icon-btn" onClick={() => setShowCreateGroupModal(true)} title="Tạo nhóm mới">
+                                    <Plus size={20} />
+                                </button>
+                            )}
                             {activeTab === "contacts" && (
                                 <button className="icon-btn" onClick={() => setShowAddFriendModal(true)}>
                                     <UserPlus size={20} />
@@ -243,7 +313,24 @@ const ChatSidebar = ({
                             ) : (
                                 <>
                                     <FriendRequestList pendingRequests={pendingRequests} onAccept={handleAccept} onDecline={handleDecline} />
-                                    <FriendsList friends={friends} onStartChat={onStartChat} />
+                                    <FriendsList friends={friends} onStartChat={onStartChat} onBlockUser={handleBlockUser} />
+
+                                    {/* Blocked Users Toggle */}
+                                    {blockedUsers.length > 0 && (
+                                        <button
+                                            className="show-blocked-btn"
+                                            onClick={() => setShowBlockedList(!showBlockedList)}
+                                        >
+                                            <Ban size={16} />
+                                            <span>{showBlockedList ? "Ẩn" : "Xem"} danh sách chặn ({blockedUsers.length})</span>
+                                        </button>
+                                    )}
+                                    {showBlockedList && blockedUsers.length > 0 && (
+                                        <BlockedUsersList
+                                            blockedUsers={blockedUsers}
+                                            onUnblock={handleUnblockUser}
+                                        />
+                                    )}
                                 </>
                             )}
                         </div>
@@ -286,6 +373,13 @@ const ChatSidebar = ({
             </aside>
 
             {showAddFriendModal && <AddFriendModal onClose={() => setShowAddFriendModal(false)} />}
+            {showCreateGroupModal && (
+                <CreateGroupModal
+                    currentUserId={currentUser?.id}
+                    onClose={() => setShowCreateGroupModal(false)}
+                    onGroupCreated={handleGroupCreated}
+                />
+            )}
         </SkeletonTheme>
     );
 };

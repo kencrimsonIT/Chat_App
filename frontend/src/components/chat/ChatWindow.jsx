@@ -1,18 +1,25 @@
-import React, { useEffect, useRef } from "react";
-import { Info, MoreHorizontal, UserPlus } from "lucide-react";
+import React, { useEffect, useRef, useState } from "react";
+import { Info, MoreHorizontal, Users } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import MessageItem from "./MessageItem";
 import ChatInput from "./ChatInput";
+import GroupInfoPanel from "./GroupInfoPanel";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
 
-const ChatWindow = ({ activeChat, messages, onSendMessage, isLoading }) => {
+const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onGroupInfoUpdate, isLoading }) => {
     const scrollRef = useRef();
+    const [showGroupInfo, setShowGroupInfo] = useState(false);
 
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    useEffect(() => {
+        // Close group info panel when switching chats
+        setShowGroupInfo(false);
+    }, [activeChat?.id]);
 
     if (isLoading) {
         return (
@@ -36,7 +43,6 @@ const ChatWindow = ({ activeChat, messages, onSendMessage, isLoading }) => {
                 </header>
 
                 <div className="message-list">
-                    {/* Render mảng mô phỏng tin nhắn (tin của mình, tin của bạn) */}
                     {[false, true, false, false, true].map((isMe, index) => (
                         <div key={index} className={`message-item-wrapper ${isMe ? 'me' : 'them'}`} style={{ display: 'flex', marginBottom: 20, justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                             {!isMe && (
@@ -51,7 +57,6 @@ const ChatWindow = ({ activeChat, messages, onSendMessage, isLoading }) => {
                     ))}
                 </div>
 
-                {/* Phần Input mô phỏng */}
                 <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border-color, #eee)', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <Skeleton circle width={40} height={40} />
                     <div style={{ flex: 1 }}>
@@ -77,38 +82,72 @@ const ChatWindow = ({ activeChat, messages, onSendMessage, isLoading }) => {
         );
     }
 
+    const isGroup = activeChat.type === "GROUP";
+    const memberCount = roomDetail?.members?.length || 0;
+
     return (
-        <main className="chat-window">
-            <header className="chat-header">
-                <div className="header-user">
-                    <div className="avatar-wrapper">
-                        <img src={activeChat.avatar || defaultPfp} alt={activeChat.name} />
-                        {activeChat.online && <span className="status-dot"></span>}
+        <>
+            <main className={`chat-window ${showGroupInfo && isGroup ? 'with-side-panel' : ''}`}>
+                <header className="chat-header">
+                    <div className="header-user">
+                        <div className="avatar-wrapper">
+                            {isGroup ? (
+                                <div className="group-avatar">
+                                    <span>{(activeChat.name || "G")[0].toUpperCase()}</span>
+                                </div>
+                            ) : (
+                                <img src={activeChat.avatar || defaultPfp} alt={activeChat.name} />
+                            )}
+                            {activeChat.online && !isGroup && <span className="status-dot"></span>}
+                        </div>
+                        <div className="user-info">
+                            <h3>{activeChat.name}</h3>
+                            <p className="status">
+                                {isGroup
+                                    ? `${memberCount} thành viên`
+                                    : (activeChat.online ? 'Đang hoạt động' : 'Ngoại tuyến')}
+                            </p>
+                        </div>
                     </div>
-                    <div className="user-info">
-                        <h3>{activeChat.name}</h3>
-                        <p className="status">{activeChat.online ? 'Đang hoạt động' : 'Ngoại tuyến'}</p>
+
+                    <div className="header-actions">
+                        {isGroup && (
+                            <button
+                                className={`icon-btn ${showGroupInfo ? 'active' : ''}`}
+                                onClick={() => setShowGroupInfo(!showGroupInfo)}
+                                title="Thông tin nhóm"
+                            >
+                                <Users size={20} />
+                            </button>
+                        )}
+                        <button className="icon-btn"><Info size={20} /></button>
                     </div>
+                </header>
+
+                <div className="message-list" ref={scrollRef}>
+                    {messages.map((msg, index) => (
+                        <MessageItem
+                            key={index}
+                            message={msg}
+                            isMe={msg.senderId === 'me'}
+                        />
+                    ))}
                 </div>
 
-                <div className="header-actions">
-                    <button className="icon-btn"><UserPlus size={20} /></button>
-                    <button className="icon-btn"><Info size={20} /></button>
-                </div>
-            </header>
+                <ChatInput onSend={onSendMessage} />
+            </main>
 
-            <div className="message-list" ref={scrollRef}>
-                {messages.map((msg, index) => (
-                    <MessageItem
-                        key={index}
-                        message={msg}
-                        isMe={msg.senderId === 'me'}
-                    />
-                ))}
-            </div>
-
-            <ChatInput onSend={onSendMessage} />
-        </main>
+            {/* Group Info Side Panel */}
+            {isGroup && showGroupInfo && (
+                <GroupInfoPanel
+                    roomId={activeChat.id}
+                    currentUserId={Number(currentUserId)}
+                    currentUserName={currentUsername}
+                    onClose={() => setShowGroupInfo(false)}
+                    onUpdate={onGroupInfoUpdate}
+                />
+            )}
+        </>
     );
 };
 
