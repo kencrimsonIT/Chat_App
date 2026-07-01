@@ -403,7 +403,13 @@ $border-light: rgba(0, 0, 0, 0.05);
             justify-content: space-between;
             align-items: center;
             margin-bottom: 4px;
-            .name { font-size: 0.95rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .name {
+              font-size: 0.95rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              .group-icon { color: $primary; flex-shrink: 0; }
+            }
             .time { font-size: 0.75rem; color: $text-muted; }
         }
 
@@ -565,6 +571,156 @@ $border-light: rgba(0, 0, 0, 0.05);
       box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     }
   }
+}
+
+// Blocked users section
+.blocked-users-section {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid $border-light;
+
+    .section-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #ef4444;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 12px 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    ul { list-style: none; padding: 0; margin: 0; }
+
+    .blocked-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+        margin-bottom: 4px;
+
+        &:hover { background: rgba(239, 68, 68, 0.05); }
+
+        .contact-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            .blocked-avatar {
+                width: 44px;
+                height: 44px;
+                border-radius: 14px;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #fff;
+                font-weight: 800;
+                font-size: 1.1rem;
+                flex-shrink: 0;
+            }
+
+            .contact-details {
+                .name { font-size: 0.95rem; font-weight: 700; margin: 0 0 4px 0; color: $text-main; }
+                .status-text.blocked { font-size: 0.75rem; color: #ef4444; margin: 0; font-weight: 500; }
+            }
+        }
+
+        .unblock-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            font-family: $font;
+
+            &:hover {
+                background: #10b981;
+                color: #fff;
+                box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 20px;
+        p { color: $text-muted; font-size: 0.85rem; font-weight: 500; margin: 0; }
+    }
+}
+
+// Show blocked button
+.show-blocked-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: calc(100% - 16px);
+    margin: 12px 8px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+    font-family: $font;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.15);
+    }
+}
+
+// Danger icon button (for block action in FriendsList)
+.contact-item .icon-btn.danger {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+
+    &:hover {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+}
+
+// Dark theme overrides for blocked UI
+.chat-page-container.dark-theme {
+    .blocked-users-section {
+        border-top-color: rgba(255, 255, 255, 0.05);
+
+        .blocked-item {
+            .contact-info .contact-details .name { color: #f8fafc; }
+            &:hover { background: rgba(239, 68, 68, 0.1); }
+        }
+    }
+
+    .show-blocked-btn {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+
+        &:hover { background: rgba(239, 68, 68, 0.25); }
+    }
+
+    .contact-item .icon-btn.danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+
+        &:hover {
+            background: #ef4444;
+            color: #fff;
+        }
+    }
 }
 
 // Add friend dialog
@@ -744,7 +900,554 @@ $border-light: rgba(0, 0, 0, 0.05);
   }
 }
 
+// ==============================================
+// Group Chat Components
+// ==============================================
+
+// Group Avatar (letter-based)
+.group-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, $primary, #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+// Create Group Modal
+.group-modal-content {
+  background-color: #ffffff;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+  animation: modalSlideUp 0.3s ease-out;
+  overflow: hidden;
+
+  .group-modal-body {
+    padding: 20px 24px;
+    flex: 1;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar { width: 5px; }
+    &::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 5px; }
+
+    .group-name-input {
+      margin-bottom: 16px;
+
+      label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: $text-muted;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid $border-light;
+        border-radius: 14px;
+        font-family: $font;
+        font-size: 0.95rem;
+        outline: none;
+        transition: all 0.2s;
+        box-sizing: border-box;
+
+        &:focus {
+          border-color: $primary-light;
+          box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        &::placeholder { color: $text-muted; }
+      }
+    }
+
+    .selected-count {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: $primary;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: $primary-light;
+      border-radius: 10px;
+    }
+
+    .friend-select-list {
+      max-height: 280px;
+      overflow-y: auto;
+      margin-bottom: 8px;
+
+      &::-webkit-scrollbar { width: 5px; }
+      &::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 5px; }
+
+      .loading-text, .empty-text {
+        text-align: center;
+        padding: 20px;
+        color: $text-muted;
+        font-weight: 500;
+      }
+
+      .friend-select-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 4px;
+
+        &:hover { background: $bg-light; }
+        &.selected { background: $primary-light; }
+
+        .friend-info {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            object-fit: cover;
+          }
+
+          .name { font-weight: 700; font-size: 0.95rem; color: $text-main; }
+        }
+
+        .check-box {
+          width: 22px;
+          height: 22px;
+          border-radius: 6px;
+          border: 2px solid #cbd5e1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s;
+
+          &.checked {
+            background: $primary;
+            border-color: $primary;
+            color: #fff;
+          }
+        }
+      }
+    }
+
+    .error-text {
+      color: #ef4444;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-align: center;
+      margin: 8px 0;
+    }
+  }
+
+  .modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid $border-light;
+
+    .cancel-btn {
+      padding: 10px 24px;
+      border-radius: 12px;
+      border: 1px solid $border-light;
+      background: transparent;
+      font-family: $font;
+      font-weight: 600;
+      cursor: pointer;
+      color: $text-muted;
+      transition: all 0.2s;
+
+      &:hover { background: $bg-light; }
+    }
+
+    .create-btn {
+      padding: 10px 24px;
+      border-radius: 12px;
+      border: none;
+      background: $primary;
+      color: #fff;
+      font-family: $font;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover:not(:disabled) {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Group Info Panel (side panel)
+.group-info-panel {
+  width: 340px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.6);
+  border-left: 1px solid $border-light;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 5px; }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid $border-light;
+
+    h3 { margin: 0; font-size: 1rem; font-weight: 800; }
+
+    .close-btn {
+      background: $bg-light;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $text-muted;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      &:hover {
+        background: #fee2e2;
+        color: #ef4444;
+      }
+    }
+  }
+
+  .panel-body {
+    padding: 20px;
+    flex: 1;
+
+    .loading-text { text-align: center; color: $text-muted; padding: 20px; }
+
+    .group-summary {
+      text-align: center;
+      margin-bottom: 20px;
+
+      .group-avatar-lg {
+        width: 72px;
+        height: 72px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, $primary, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 800;
+        font-size: 2rem;
+        margin: 0 auto 12px;
+      }
+
+      h4 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 800; }
+      .member-count { margin: 0; font-size: 0.85rem; color: $text-muted; font-weight: 500; }
+    }
+
+    .add-member-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 12px;
+      border: 2px dashed $primary-light;
+      background: transparent;
+      color: $primary;
+      font-family: $font;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+
+      &:hover { background: $primary-light; border-color: $primary; }
+    }
+
+    .add-member-section {
+      background: $bg-light;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 16px;
+
+      .search-bar-small {
+        input {
+          width: 100%;
+          padding: 10px 14px;
+          border-radius: 10px;
+          border: 1px solid $border-light;
+          font-family: $font;
+          font-size: 0.9rem;
+          outline: none;
+          box-sizing: border-box;
+          &:focus { border-color: $primary; }
+        }
+      }
+
+      .add-member-list {
+        max-height: 180px;
+        overflow-y: auto;
+        margin-top: 8px;
+
+        .empty-text { text-align: center; color: $text-muted; padding: 12px; font-size: 0.85rem; }
+
+        .add-member-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 10px;
+          border-radius: 10px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.9rem;
+          font-weight: 600;
+
+          &:hover { background: rgba(59, 130, 246, 0.1); }
+
+          .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+          }
+
+          .add-icon {
+            margin-left: auto;
+            color: $primary;
+          }
+        }
+      }
+    }
+
+    .members-section {
+      margin-top: 8px;
+
+      h5 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: $text-muted;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 12px;
+      }
+
+      .members-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+
+        .member-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 10px;
+          border-radius: 12px;
+          transition: all 0.2s;
+
+          &:hover { background: rgba(0, 0, 0, 0.02); }
+
+          .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            object-fit: cover;
+          }
+
+          .member-info {
+            flex: 1;
+            min-width: 0;
+
+            .member-name {
+              display: block;
+              font-size: 0.9rem;
+              font-weight: 700;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+
+              .you-tag {
+                color: $primary;
+                font-weight: 600;
+                font-size: 0.75rem;
+                margin-left: 4px;
+              }
+            }
+
+            .member-role {
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              font-size: 0.75rem;
+              color: $text-muted;
+              font-weight: 500;
+            }
+          }
+
+          .member-actions {
+            display: flex;
+            gap: 4px;
+
+            .icon-btn-sm {
+              width: 30px;
+              height: 30px;
+              border-radius: 8px;
+              border: none;
+              background: transparent;
+              color: $text-muted;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s;
+
+              &:hover { background: $primary-light; color: $primary; }
+
+              &.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+            }
+          }
+        }
+      }
+    }
+
+    .leave-group-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      font-family: $font;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      margin-top: 20px;
+
+      &:hover {
+        background: #ef4444;
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      }
+    }
+  }
+}
+
+// Chat window with side panel
+.chat-window.with-side-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+// Dark theme overrides for group components
 .chat-page-container.dark-theme {
+  .group-modal-content {
+    background-color: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+
+    .modal-header {
+      border-bottom-color: rgba(255, 255, 255, 0.05);
+      h3 { color: #f8fafc; }
+      .close-btn {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+        &:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+      }
+    }
+
+    .group-modal-body {
+      .group-name-input {
+        label { color: #94a3b8; }
+        input {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+          color: #f8fafc;
+          &::placeholder { color: #64748b; }
+        }
+      }
+
+      .friend-select-item {
+        .friend-info .name { color: #f8fafc; }
+        &:hover { background: rgba(255, 255, 255, 0.03); }
+        &.selected { background: rgba(59, 130, 246, 0.15); }
+      }
+    }
+
+    .modal-footer {
+      border-top-color: rgba(255, 255, 255, 0.05);
+      .cancel-btn {
+        color: #94a3b8;
+        border-color: rgba(255, 255, 255, 0.1);
+        &:hover { background: rgba(255, 255, 255, 0.05); }
+      }
+    }
+  }
+
+  .group-info-panel {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.05);
+
+    .panel-header {
+      border-bottom-color: rgba(255, 255, 255, 0.05);
+      h3 { color: #f8fafc; }
+      .close-btn {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+      }
+    }
+
+    .panel-body {
+      .group-summary {
+        h4 { color: #f8fafc; }
+      }
+
+      .member-item {
+        .member-info .member-name { color: #f8fafc; }
+        &:hover { background: rgba(255, 255, 255, 0.03); }
+      }
+
+      .add-member-section {
+        background: rgba(255, 255, 255, 0.03);
+        .search-bar-small input {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+          color: #f8fafc;
+        }
+      }
+    }
+  }
+
   .add-friend-modal-overlay {
     .add-friend-modal-content {
       background-color: #1e293b;
