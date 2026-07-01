@@ -33,16 +33,32 @@ public class FriendshipService {
                 .orElseThrow(() -> new ResourceNotFoundException("Sender not found"));
         User receiver = userRepository.findById(receiverId)
                 .orElseThrow(() -> new ResourceNotFoundException("Receiver not found"));
-        // Prevent duplicate or self request
+
+        // Prevent self-request
         if (senderId.equals(receiverId)) {
             throw new IllegalArgumentException("Cannot send friend request to self");
         }
-        boolean exists = friendshipRepository
-                .findBySenderAndReceiver(sender, receiver)
-                .isPresent();
-        if (exists) {
-            throw new IllegalArgumentException("Friend request already exists");
+
+        // Check if either user has blocked the other
+        if (isBlocked(senderId, receiverId)) {
+            throw new IllegalArgumentException("Cannot send friend request — a block is in effect between you and this user");
         }
+
+        // Check for existing friendship (any status)
+        var existingFriendship = friendshipRepository.findBySenderAndReceiver(sender, receiver);
+        if (existingFriendship.isPresent()) {
+            Friendship f = existingFriendship.get();
+            // If the relationship was previously declined, allow re-sending a new request
+            if (f.getStatus() == Friendship.FriendshipStatus.PENDING ||
+                f.getStatus() == Friendship.FriendshipStatus.ACCEPTED) {
+                throw new IllegalArgumentException("Friend request already exists");
+            }
+            // If it was declined, re-send as PENDING
+            f.setStatus(Friendship.FriendshipStatus.PENDING);
+            f.setUpdatedAt(LocalDateTime.now());
+            return friendshipRepository.save(f);
+        }
+
         Friendship friendship = new Friendship();
         friendship.setSender(sender);
         friendship.setReceiver(receiver);
@@ -89,16 +105,34 @@ public class FriendshipService {
         return friendshipRepository.save(friendship);
     }
 
-    // Get list of friends for a user (accepted friendships)
+    // Get list of friends for a user (accepted friendships, excluding blocked users)
     public List<User> getFriends(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Get all users that blocked the current user
+        List<Long> blockedByIds = friendshipRepository
+                .findByReceiverAndStatus(user, Friendship.FriendshipStatus.BLOCKED)
+                .stream()
+                .map(f -> f.getSender().getId())
+                .collect(Collectors.toList());
+
         List<Friendship> asSender = friendshipRepository.findBySenderAndStatus(user, Friendship.FriendshipStatus.ACCEPTED);
         List<Friendship> asReceiver = friendshipRepository.findByReceiverAndStatus(user,  Friendship.FriendshipStatus.ACCEPTED);
 
         List<User> friends = new ArrayList<>();
-        asSender.stream().map(Friendship::getReceiver).forEach(friends::add);
-        asReceiver.stream().map(Friendship::getSender).forEach(friends::add);
+        for (Friendship f : asSender) {
+            User friend = f.getReceiver();
+            if (!blockedByIds.contains(friend.getId())) {
+                friends.add(friend);
+            }
+        }
+        for (Friendship f : asReceiver) {
+            User friend = f.getSender();
+            if (!blockedByIds.contains(friend.getId())) {
+                friends.add(friend);
+            }
+        }
         return friends;
     }
 
@@ -114,5 +148,96 @@ public class FriendshipService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return friendshipRepository.findBySenderAndStatus(user, Friendship.FriendshipStatus.PENDING);
+    }
+
+    // ─── Block a user ──────────────────────────────────────────────────────
+    public Friendship blockUser(Long blockerId, Long blockedId) {
+        if (blockerId.equals(blockedId)) {
+            throw new IllegalArgumentException("Cannot block yourself");
+        }
+
+        User blocker = userRepository.findById(blockerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User blocked = userRepository.findById(blockedId)
+                .orElseThrow(() -> new ResourceNotFoundException("User to block not found"));
+
+        // Check if already blocked (either direction)
+        List<Friendship> existingBlocks = friendshipRepository.findBlockBetweenUsers(blocker, blocked);
+        for (Friendship f : existingBlocks) {
+            // If the blocker is already the sender of a BLOCKED record, it's already blocked
+            if (f.getSender().getId().equals(blockerId)) {
+                throw new IllegalArgumentException("User is already blocked");
+            }
+            // If the other user blocked us, they have already blocked us
+            throw new IllegalArgumentException("Cannot block this user");
+        }
+
+        // Find existing friendship record (any status) and update it
+        var existing = friendshipRepository.findBySenderAndReceiver(blocker, blocked);
+        if (existing.isPresent()) {
+            Friendship f = existing.get();
+            f.setStatus(Friendship.FriendshipStatus.BLOCKED);
+            f.setUpdatedAt(LocalDateTime.now());
+            return friendshipRepository.save(f);
+        }
+
+        // Also check reverse direction
+        var reverseExisting = friendshipRepository.findBySenderAndReceiver(blocked, blocker);
+        if (reverseExisting.isPresent()) {
+            Friendship f = reverseExisting.get();
+            // Reassign so blocker is the sender
+            f.setSender(blocker);
+            f.setReceiver(blocked);
+            f.setStatus(Friendship.FriendshipStatus.BLOCKED);
+            f.setUpdatedAt(LocalDateTime.now());
+            return friendshipRepository.save(f);
+        }
+
+        // Create new BLOCKED record
+        Friendship friendship = new Friendship();
+        friendship.setSender(blocker);
+        friendship.setReceiver(blocked);
+        friendship.setStatus(Friendship.FriendshipStatus.BLOCKED);
+        friendship.setCreatedAt(LocalDateTime.now());
+        return friendshipRepository.save(friendship);
+    }
+
+    // ─── Unblock a user ────────────────────────────────────────────────────
+    public void unblockUser(Long blockerId, Long blockedId) {
+        if (blockerId.equals(blockedId)) {
+            throw new IllegalArgumentException("Cannot unblock yourself");
+        }
+
+        User blocker = userRepository.findById(blockerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User blocked = userRepository.findById(blockedId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        Friendship friendship = friendshipRepository
+                .findBySenderAndReceiverAndStatus(blocker, blocked, Friendship.FriendshipStatus.BLOCKED)
+                .orElseThrow(() -> new ResourceNotFoundException("Block not found"));
+
+        friendshipRepository.delete(friendship);
+    }
+
+    // ─── Get list of users blocked by the current user ─────────────────────
+    public List<User> getBlockedUsers(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return friendshipRepository.findBySenderAndStatus(user, Friendship.FriendshipStatus.BLOCKED)
+                .stream()
+                .map(Friendship::getReceiver)
+                .collect(Collectors.toList());
+    }
+
+    // ─── Check if either user has blocked the other ────────────────────────
+    public boolean isBlocked(Long userId1, Long userId2) {
+        User user1 = userRepository.findById(userId1)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user2 = userRepository.findById(userId2)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        return !friendshipRepository.findBlockBetweenUsers(user1, user2).isEmpty();
     }
 }
