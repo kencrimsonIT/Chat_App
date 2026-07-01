@@ -10,7 +10,9 @@ public class FriendshipNotificationDTO {
     public enum NotificationType {
         FRIEND_REQUEST,
         FRIEND_ACCEPTED,
-        FRIEND_DECLINED
+        FRIEND_DECLINED,
+        FRIEND_BLOCKED,
+        FRIEND_UNBLOCKED
     }
 
     private Long friendshipId;
