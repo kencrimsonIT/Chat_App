@@ -1,7 +1,14 @@
 import React from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Ban } from "lucide-react";
 
-const FriendList = ({ friends, onStartChat }) => {
+const FriendList = ({ friends, onStartChat, onBlockUser }) => {
+    const handleBlock = (e, userId) => {
+        e.stopPropagation();
+        if (window.confirm("Bạn có chắc muốn chặn người dùng này?")) {
+            if (onBlockUser) onBlockUser(userId);
+        }
+    };
+
     return (
         <div className="friend-list-section">
             <h3 className="section-title">Bạn bè ({friends.length})</h3>
@@ -20,9 +27,18 @@ const FriendList = ({ friends, onStartChat }) => {
                                     <p className="status-text">Active</p>
                                 </div>
                             </div>
-                            <button className="icon-btn" onClick={() => onStartChat(friend)}>
-                                <MessageSquare size={18} />
-                            </button>
+                            <div className="action-buttons">
+                                <button className="icon-btn" onClick={() => onStartChat(friend)} title="Nhắn tin">
+                                    <MessageSquare size={18} />
+                                </button>
+                                <button
+                                    className="icon-btn danger"
+                                    onClick={(e) => handleBlock(e, friend.id)}
+                                    title="Chặn người dùng"
+                                >
+                                    <Ban size={18} />
+                                </button>
+                            </div>
                         </li>
                     ))}
                 </ul>
