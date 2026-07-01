@@ -106,6 +106,57 @@ public class FriendshipController {
         return ResponseEntity.ok(sent);
     }
 
+    // ─── Block a user ────────────────────────────────────────────────────
+    @PostMapping("/block/{userId}")
+    public ResponseEntity<Friendship> blockUser(@PathVariable Long userId) {
+        User currentUser = getAuthenticatedUser();
+
+        if (currentUser.getId().equals(userId)) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Friendship friendship = friendshipService.blockUser(currentUser.getId(), userId);
+
+        // Notify the blocked user
+        FriendshipNotificationDTO notification = buildNotification(
+                friendship,
+                FriendshipNotificationDTO.NotificationType.FRIEND_BLOCKED
+        );
+        webSocketHandler.sendFriendshipNotification(userId, notification);
+
+        return ResponseEntity.ok(friendship);
+    }
+
+    // ─── Unblock a user ──────────────────────────────────────────────────
+    @DeleteMapping("/block/{userId}")
+    public ResponseEntity<Void> unblockUser(@PathVariable Long userId) {
+        User currentUser = getAuthenticatedUser();
+
+        friendshipService.unblockUser(currentUser.getId(), userId);
+
+        // Notify the unblocked user
+        // Build a minimal notification for unblock
+        FriendshipNotificationDTO notification = new FriendshipNotificationDTO();
+        notification.setType(FriendshipNotificationDTO.NotificationType.FRIEND_UNBLOCKED);
+        notification.setSenderId(currentUser.getId());
+        notification.setSenderUsername(currentUser.getUsername());
+        notification.setSenderFullName(currentUser.getFullName());
+        notification.setSenderAvatarUrl(currentUser.getAvatarUrl());
+        notification.setReceiverId(userId);
+        notification.setTimestamp(LocalDateTime.now());
+        webSocketHandler.sendFriendshipNotification(userId, notification);
+
+        return ResponseEntity.ok().build();
+    }
+
+    // ─── List blocked users ──────────────────────────────────────────────
+    @GetMapping("/blocked")
+    public ResponseEntity<List<User>> getBlockedUsers() {
+        User currentUser = getAuthenticatedUser();
+        List<User> blockedUsers = friendshipService.getBlockedUsers(currentUser.getId());
+        return ResponseEntity.ok(blockedUsers);
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────────────
 
     private User getAuthenticatedUser() {
