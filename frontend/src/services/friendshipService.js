@@ -36,6 +36,24 @@ const getSentRequests = async () => {
     return response.data;
 };
 
+// ─── Block a user ────────────────────────────────────────────────────
+const blockUser = async (userId) => {
+    const response = await axiosInstance.post(`/friendships/block/${userId}`);
+    return response.data;
+};
+
+// ─── Unblock a user ──────────────────────────────────────────────────
+const unblockUser = async (userId) => {
+    const response = await axiosInstance.delete(`/friendships/block/${userId}`);
+    return response.data;
+};
+
+// ─── Get list of blocked users ───────────────────────────────────────
+const getBlockedUsers = async () => {
+    const response = await axiosInstance.get("/friendships/blocked");
+    return response.data;
+};
+
 const friendshipService = {
     sendFriendRequest,
     acceptFriendRequest,
@@ -43,6 +61,9 @@ const friendshipService = {
     getFriends,
     getPendingRequests,
     getSentRequests,
+    blockUser,
+    unblockUser,
+    getBlockedUsers,
 };
 
 export default friendshipService;
