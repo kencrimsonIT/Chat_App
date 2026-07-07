@@ -197,6 +197,18 @@ const ChatPage = () => {
         sendChatMessage(messageDTO);
     };
 
+    const handleSendFile = async (file, onProgress) => {
+        if (!activeChatId) return;
+
+        try {
+            await chatService.uploadFile(file, activeChatId, "", onProgress);
+            // The uploaded message will arrive via WebSocket broadcast
+        } catch (err) {
+            console.error("File upload failed:", err);
+            throw err;
+        }
+    };
+
     // Transform messages to the format expected by MessageItem
     const formattedMessages = messages.map(msg => ({
         id: msg.id,
@@ -204,7 +216,12 @@ const ChatPage = () => {
         time: msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
         senderId: msg.senderId.toString() === userId.toString() ? "me" : "them",
         senderUsername: msg.senderUsername,
-        senderAvatar: defaultPfp
+        senderAvatar: defaultPfp,
+        type: msg.type,
+        fileUrl: msg.fileUrl,
+        fileName: msg.fileName,
+        fileType: msg.fileType,
+        fileSize: msg.fileSize
     }));
 
     return (
@@ -226,6 +243,7 @@ const ChatPage = () => {
                     messages={formattedMessages}
                     isLoading={isMessagesLoading}
                     onSendMessage={handleSendMessage}
+                    onSendFile={handleSendFile}
                     onGroupInfoUpdate={handleGroupInfoUpdate}
                 />
             </div>
