@@ -1,5 +1,6 @@
 package com.messapp.backend.controller;
 
+import com.messapp.backend.dto.UpdateProfileRequest;
 import com.messapp.backend.entity.User;
 import com.messapp.backend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,5 +44,12 @@ public class UserController {
     public ResponseEntity<List<User>> searchUsers(@RequestParam String keyword) {
         List<User> users = userService.searchUsers(keyword);
         return ResponseEntity.ok(users);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<User> updateProfile(@RequestBody UpdateProfileRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = userService.updateProfile(authentication.getName(), request);
+        return ResponseEntity.ok(user);
     }
 }
