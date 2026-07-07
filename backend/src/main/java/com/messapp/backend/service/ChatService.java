@@ -25,6 +25,10 @@ public class ChatService {
         message.setSenderUsername(messageDTO.getSenderUsername());
         message.setContent(messageDTO.getContent());
         message.setType(messageDTO.getType());
+        message.setFileUrl(messageDTO.getFileUrl());
+        message.setFileName(messageDTO.getFileName());
+        message.setFileType(messageDTO.getFileType());
+        message.setFileSize(messageDTO.getFileSize());
         message.setCreatedAt(LocalDateTime.now());
 
         Message savedMessage = messageRepository.save(message);
@@ -48,6 +52,10 @@ public class ChatService {
                 .senderUsername(message.getSenderUsername())
                 .content(message.getContent())
                 .type(message.getType())
+                .fileUrl(message.getFileUrl())
+                .fileName(message.getFileName())
+                .fileType(message.getFileType())
+                .fileSize(message.getFileSize())
                 .createdAt(message.getCreatedAt())
                 .build();
     }
