@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, MoreVertical, MessageSquare, Users, Settings, UserPlus, User, Key, Moon, Sun, Globe, LogOut, Plus, Ban } from "lucide-react";
+import { Search, MessageSquare, Users, Settings, UserPlus, User, Key, Moon, Sun, Globe, LogOut, Plus, Ban } from "lucide-react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import ConversationItem from "./ConversationItem";
 import FriendsList from "../common/FriendsList";
@@ -221,9 +221,9 @@ const ChatSidebar = ({
         }
     };
 
-    const handleStartChat = async (targetUserId) => {
-        // Xử lý tạo phòng chat riêng từ ID bạn bè (sử dụng chatService đã có của bạn)
-    };
+    // const handleStartChat = async (targetUserId) => {
+    //     // Xử lý tạo phòng chat riêng từ ID bạn bè (sử dụng chatService đã có của bạn)
+    // };
 
     // Lọc cuộc trò chuyện ở tab Chat
     const filteredConversations = conversations.filter(conv =>
@@ -247,7 +247,6 @@ const ChatSidebar = ({
                                     <UserPlus size={20} />
                                 </button>
                             )}
-                            <button className="icon-btn"><MoreVertical size={20} /></button>
                         </div>
                     </div>
                     <div className="search-bar">
