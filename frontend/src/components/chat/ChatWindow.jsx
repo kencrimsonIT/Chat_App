@@ -6,7 +6,7 @@ import ChatInput from "./ChatInput";
 import GroupInfoPanel from "./GroupInfoPanel";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
 
-const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onGroupInfoUpdate, isLoading }) => {
+const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onSendFile, onGroupInfoUpdate, isLoading }) => {
     const scrollRef = useRef();
     const [showGroupInfo, setShowGroupInfo] = useState(false);
 
@@ -120,7 +120,7 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                                 <Users size={20} />
                             </button>
                         )}
-                        <button className="icon-btn"><Info size={20} /></button>
+                        {/*<button className="icon-btn"><Info size={20} /></button>*/}
                     </div>
                 </header>
 
@@ -134,7 +134,7 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                     ))}
                 </div>
 
-                <ChatInput onSend={onSendMessage} />
+                <ChatInput onSend={onSendMessage} onSendFile={onSendFile} />
             </main>
 
             {/* Group Info Side Panel */}
