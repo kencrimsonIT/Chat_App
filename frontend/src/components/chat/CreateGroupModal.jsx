@@ -149,7 +149,7 @@ const CreateGroupModal = ({ currentUserId, onClose, onGroupCreated }) => {
                     <button
                         className="create-btn"
                         onClick={handleCreate}
-                        disabled={isCreating || !groupName.trim() || selectedIds.size === 0}
+                        disabled={isCreating || selectedIds.size === 0}
                     >
                         {isCreating ? "Đang tạo..." : "Tạo nhóm"}
                     </button>
