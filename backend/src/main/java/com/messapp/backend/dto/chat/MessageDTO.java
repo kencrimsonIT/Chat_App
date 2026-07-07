@@ -18,5 +18,9 @@ public class MessageDTO {
     private String senderUsername;
     private String content;
     private String type;
+    private String fileUrl;
+    private String fileName;
+    private String fileType;
+    private Long fileSize;
     private LocalDateTime createdAt;
 }

@@ -27,6 +27,12 @@ public class Message {
     private String content;
     private String type;
 
+    // Attachment fields
+    private String fileUrl;
+    private String fileName;
+    private String fileType;
+    private Long fileSize;
+
     @Indexed
     private LocalDateTime createdAt = LocalDateTime.now();
 
