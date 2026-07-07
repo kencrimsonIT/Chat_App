@@ -1,5 +1,6 @@
 package com.messapp.backend.service;
 
+import com.messapp.backend.dto.UpdateProfileRequest;
 import com.messapp.backend.entity.User;
 import com.messapp.backend.exception.ResourceNotFoundException;
 import com.messapp.backend.repository.UserRepository;
@@ -9,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +42,27 @@ public class UserService {
         String url = (String) uploadResult.get("url");
 
         user.setCoverUrl(url);
+        return userRepository.save(user);
+    }
+
+    public User updateProfile(String username, UpdateProfileRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (request.getFullName() != null) {
+            user.setFullName(request.getFullName());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getLocation() != null) {
+            user.setLocation(request.getLocation());
+        }
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+
+        user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
 
