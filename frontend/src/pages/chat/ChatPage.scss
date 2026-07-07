@@ -95,6 +95,21 @@ $border-light: rgba(0, 0, 0, 0.05);
                     .upload-progress-info { color: #94a3b8; }
                     .progress-track { background: rgba(255, 255, 255, 0.1); }
                 }
+
+                // Dark theme pickers
+                .emoji-picker-dropdown {
+                    .epr-main { background: #1e293b !important; }
+                }
+
+                .gif-picker-dropdown {
+                    background: #1e293b;
+                    border-color: rgba(255, 255, 255, 0.1);
+                    .gif-search-bar {
+                        background: rgba(255, 255, 255, 0.05);
+                        input { color: #f8fafc; }
+                    }
+                    .gif-empty { color: #94a3b8; }
+                }
             }
         }
 
@@ -560,8 +575,121 @@ $border-light: rgba(0, 0, 0, 0.05);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 
             input { flex: 1; border: none; outline: none; background: transparent; font-family: $font; font-size: 0.95rem; &:disabled { opacity: 0.6; } }
-            .emoji-btn { background: transparent; border: none; color: $text-muted; cursor: pointer; padding: 4px; }
+            .emoji-btn, .gif-btn { background: transparent; border: none; color: $text-muted; cursor: pointer; padding: 4px; transition: color 0.2s; &:hover { color: $primary; } }
             .send-btn { width: 36px; height: 36px; border-radius: 10px; background: #e2e8f0; color: #94a3b8; border: none; cursor: pointer; transition: all 0.3s; @include flex-center; &.active { background: $primary; color: #fff; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); } &:disabled { opacity: 0.5; cursor: not-allowed; } }
+
+            // Shared picker wrapper
+            .picker-wrapper {
+                position: relative;
+                display: inline-flex;
+            }
+
+            // Emoji picker dropdown
+            .emoji-picker-dropdown {
+                position: absolute;
+                bottom: calc(100% + 8px);
+                right: 0;
+                z-index: 100;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+
+                .EmojiPickerReact {
+                    --epr-bg-color: #fff;
+                    --epr-category-label-bg-color: #f8fafc;
+                    --epr-text-color: #334155;
+                    --epr-preview-border-color: transparent;
+                    border-radius: 16px;
+                }
+            }
+
+            // GIF picker dropdown
+            .gif-picker-dropdown {
+                position: absolute;
+                bottom: calc(100% + 8px);
+                right: 0;
+                z-index: 100;
+                width: 320px;
+                height: 380px;
+                background: #fff;
+                border-radius: 16px;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+
+                .gif-search-bar {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 12px;
+                    background: #f8fafc;
+                    border-bottom: 1px solid $border-light;
+
+                    input {
+                        flex: 1;
+                        border: none;
+                        outline: none;
+                        background: transparent;
+                        font-family: $font;
+                        font-size: 0.9rem;
+                        color: $text-main;
+
+                        &::placeholder { color: $text-muted; }
+                    }
+
+                    svg { color: $text-muted; flex-shrink: 0; }
+                }
+
+                .gif-grid {
+                    flex: 1;
+                    overflow-y: auto;
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 6px;
+                    padding: 8px;
+
+                    &::-webkit-scrollbar { width: 4px; }
+                    &::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+                    .gif-loading {
+                        grid-column: 1 / -1;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        padding: 40px;
+                        svg { color: $primary; animation: spin 1s linear infinite; }
+                    }
+
+                    .gif-empty {
+                        grid-column: 1 / -1;
+                        text-align: center;
+                        color: $text-muted;
+                        padding: 40px;
+                        font-weight: 500;
+                    }
+
+                    .gif-item {
+                        border: none;
+                        background: transparent;
+                        padding: 0;
+                        cursor: pointer;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        transition: transform 0.15s;
+
+                        &:hover { transform: scale(1.03); }
+
+                        img {
+                            width: 100%;
+                            height: 120px;
+                            object-fit: cover;
+                            display: block;
+                            border-radius: 10px;
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -197,6 +197,23 @@ const ChatPage = () => {
         sendChatMessage(messageDTO);
     };
 
+    const handleSendGif = (gifUrl, title) => {
+        if (!activeChatId || !socketConnected) return;
+
+        const messageDTO = {
+            roomId: activeChatId,
+            senderId: userId,
+            senderUsername: username,
+            content: title || "",
+            type: "IMAGE",
+            fileUrl: gifUrl,
+            fileName: title || "GIF",
+            fileType: "image/gif"
+        };
+
+        sendChatMessage(messageDTO);
+    };
+
     const handleSendFile = async (file, onProgress) => {
         if (!activeChatId) return;
 
@@ -244,6 +261,7 @@ const ChatPage = () => {
                     isLoading={isMessagesLoading}
                     onSendMessage={handleSendMessage}
                     onSendFile={handleSendFile}
+                    onSendGif={handleSendGif}
                     onGroupInfoUpdate={handleGroupInfoUpdate}
                 />
             </div>
