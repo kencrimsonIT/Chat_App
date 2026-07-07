@@ -27,6 +27,11 @@ const getCurrentUser = async () => {
     return response.data;
 };
 
+const updateProfile = async (profileData) => {
+    const response = await axiosInstance.put("/users/profile", profileData);
+    return response.data;
+};
+
 const searchUsers = async (keyword) => {
     const response = await axiosInstance.get(`/users/search?keyword=${keyword}`);
     return response.data;
@@ -36,6 +41,7 @@ const userService = {
     uploadAvatar,
     uploadCover,
     getCurrentUser,
+    updateProfile,
     searchUsers,
 };
 
