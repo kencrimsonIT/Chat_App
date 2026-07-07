@@ -7,12 +7,9 @@ import {
     Phone, 
     MapPin, 
     Calendar, 
-    ShieldCheck, 
-    Activity, 
     Edit3,
     Check,
     X,
-    Lock,
     Loader2
 } from "lucide-react";
 import "./ProfilePage.scss";
@@ -26,9 +23,20 @@ const ProfilePage = () => {
     const [loading, setLoading] = useState(true);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
+    const [saving, setSaving] = useState(false);
     
     const avatarInputRef = useRef(null);
     const coverInputRef = useRef(null);
+
+        // Raw user data from API (no display-placeholder translations)
+    const [rawUser, setRawUser] = useState(null);
+
+    const [editForm, setEditForm] = useState({
+        displayName: "",
+        phone: "",
+        location: "",
+        bio: ""
+    });
 
     const [userData, setUserData] = useState({
         displayName: "",
@@ -49,6 +57,7 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
         try {
             const data = await userService.getCurrentUser();
+            setRawUser(data);
             setUserData({
                 displayName: data.fullName || data.username,
                 username: data.username,
@@ -107,9 +116,49 @@ const ProfilePage = () => {
         }
     };
 
-    const handleSave = () => {
+    const handleEdit = () => {
+        // Use raw API data to avoid coupling with display strings
+        setEditForm({
+            displayName: rawUser?.fullName || rawUser?.username || "",
+            phone: rawUser?.phone || "",
+            location: rawUser?.location || "",
+            bio: rawUser?.bio || ""
+        });
+        setIsEditing(true);
+    };
+
+    const handleCancel = () => {
         setIsEditing(false);
-        // Save profile logic (e.g. bio, location) could be added here
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const updatedUser = await userService.updateProfile({
+                fullName: editForm.displayName,
+                phone: editForm.phone,
+                location: editForm.location,
+                bio: editForm.bio
+            });
+            setRawUser(updatedUser);
+            setUserData(prev => ({
+                ...prev,
+                displayName: updatedUser.fullName || updatedUser.username,
+                phone: updatedUser.phone || "Chưa cập nhật",
+                location: updatedUser.location || "Chưa cập nhật",
+                bio: updatedUser.bio || "Chưa có tiểu sử."
+            }));
+            setIsEditing(false);
+        } catch (err) {
+            console.error("Failed to update profile", err);
+            alert("Cập nhật hồ sơ thất bại. Vui lòng thử lại.");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleEditChange = (field, value) => {
+        setEditForm(prev => ({ ...prev, [field]: value }));
     };
 
     const renderTabContent = () => {
@@ -125,18 +174,38 @@ const ProfilePage = () => {
                                     <p>{userData.email}</p>
                                 </div>
                             </div>
-                            <div className="info-item">
+                            <div className={`info-item ${isEditing ? 'editing' : ''}`}>
                                 <div className="icon-box"><Phone size={18} /></div>
                                 <div className="info-detail">
                                     <label>Số điện thoại</label>
-                                    <p>{userData.phone}</p>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="edit-input"
+                                            value={editForm.phone}
+                                            onChange={(e) => handleEditChange('phone', e.target.value)}
+                                            placeholder="Nhập số điện thoại"
+                                        />
+                                    ) : (
+                                        <p>{userData.phone}</p>
+                                    )}
                                 </div>
                             </div>
-                            <div className="info-item">
+                            <div className={`info-item ${isEditing ? 'editing' : ''}`}>
                                 <div className="icon-box"><MapPin size={18} /></div>
                                 <div className="info-detail">
                                     <label>Địa chỉ</label>
-                                    <p>{userData.location}</p>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className="edit-input"
+                                            value={editForm.location}
+                                            onChange={(e) => handleEditChange('location', e.target.value)}
+                                            placeholder="Nhập địa chỉ"
+                                        />
+                                    ) : (
+                                        <p>{userData.location}</p>
+                                    )}
                                 </div>
                             </div>
                             <div className="info-item">
@@ -147,45 +216,19 @@ const ProfilePage = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="bio-section">
+                        <div className={`bio-section ${isEditing ? 'editing' : ''}`}>
                             <h3>Tiểu sử</h3>
-                            <p>{userData.bio}</p>
-                        </div>
-                    </div>
-                );
-            case "security":
-                return (
-                    <div className="tab-pane fade-in">
-                        <div className="security-list">
-                            <div className="security-item">
-                                <div className="security-info">
-                                    <Lock size={20} />
-                                    <div>
-                                        <h4>Đổi mật khẩu</h4>
-                                        <p>Cập nhật mật khẩu thường xuyên để bảo vệ tài khoản</p>
-                                    </div>
-                                </div>
-                                <button className="btn-outline-sm">Thay đổi</button>
-                            </div>
-                            <div className="security-item">
-                                <div className="security-info">
-                                    <ShieldCheck size={20} />
-                                    <div>
-                                        <h4>Xác thực 2 lớp</h4>
-                                        <p>Tăng cường bảo mật bằng mã xác thực OTP</p>
-                                    </div>
-                                </div>
-                                <button className="btn-outline-sm">Thiết lập</button>
-                            </div>
-                        </div>
-                    </div>
-                );
-            case "activity":
-                return (
-                    <div className="tab-pane fade-in">
-                        <div className="activity-placeholder">
-                            <Activity size={48} className="muted-icon" />
-                            <p>Không có hoạt động gần đây để hiển thị.</p>
+                            {isEditing ? (
+                                <textarea
+                                    className="edit-textarea"
+                                    value={editForm.bio}
+                                    onChange={(e) => handleEditChange('bio', e.target.value)}
+                                    placeholder="Viết tiểu sử của bạn..."
+                                    rows={4}
+                                />
+                            ) : (
+                                <p>{userData.bio}</p>
+                            )}
                         </div>
                     </div>
                 );
@@ -254,71 +297,65 @@ const ProfilePage = () => {
 
                         <div className="user-identity">
                             <div className="identity-text">
-                                <h1 className="display-name">{userData.displayName}</h1>
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        className="edit-display-name"
+                                        value={editForm.displayName}
+                                        onChange={(e) => handleEditChange('displayName', e.target.value)}
+                                        placeholder="Nhập tên hiển thị"
+                                    />
+                                ) : (
+                                    <h1 className="display-name">{userData.displayName}</h1>
+                                )}
                                 <p className="username">@{userData.username}</p>
                             </div>
                             <div className="action-buttons">
                                 {isEditing ? (
                                     <>
-                                        <button className="btn-cancel" onClick={() => setIsEditing(false)}>
+                                        <button className="btn-cancel" onClick={handleCancel}>
                                             <X size={18} /> Hủy
                                         </button>
-                                        <button className="btn-save" onClick={handleSave}>
-                                            <Check size={18} /> Lưu
+                                        <button className="btn-save" onClick={handleSave} disabled={saving}>
+                                            {saving ? <Loader2 className="animate-spin" size={18} /> : <Check size={18} />}
+                                            {saving ? "Đang lưu..." : "Lưu"}
                                         </button>
                                     </>
                                 ) : (
-                                    <button className="btn-edit" onClick={() => setIsEditing(true)}>
+                                    <button className="btn-edit" onClick={handleEdit}>
                                         <Edit3 size={18} /> Chỉnh sửa hồ sơ
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
-
-                    <div className="profile-stats">
-                        <div className="stat-item">
-                            <span className="stat-value">124</span>
-                            <span className="stat-label">Bạn bè</span>
-                        </div>
-                        <div className="divider" />
-                        <div className="stat-item">
-                            <span className="stat-value">42</span>
-                            <span className="stat-label">Nhóm</span>
-                        </div>
-                        <div className="divider" />
-                        <div className="stat-item">
-                            <span className="stat-value">1.2k</span>
-                            <span className="stat-label">Tin nhắn</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Tabs Section */}
                 <div className="profile-content">
-                    <nav className="profile-tabs">
-                        <button 
-                            className={`tab-link ${activeTab === 'info' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('info')}
-                        >
-                            <User size={18} />
-                            <span>Thông tin cá nhân</span>
-                        </button>
-                        <button 
-                            className={`tab-link ${activeTab === 'security' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('security')}
-                        >
-                            <ShieldCheck size={18} />
-                            <span>Bảo mật</span>
-                        </button>
-                        <button 
-                            className={`tab-link ${activeTab === 'activity' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('activity')}
-                        >
-                            <Activity size={18} />
-                            <span>Hoạt động</span>
-                        </button>
-                    </nav>
+                    {/*<nav className="profile-tabs">*/}
+                    {/*    <button */}
+                    {/*        className={`tab-link ${activeTab === 'info' ? 'active' : ''}`}*/}
+                    {/*        onClick={() => setActiveTab('info')}*/}
+                    {/*    >*/}
+                    {/*        <User size={18} />*/}
+                    {/*        <span>Thông tin cá nhân</span>*/}
+                    {/*    </button>*/}
+                    {/*    /!*<button *!/*/}
+                    {/*    /!*    className={`tab-link ${activeTab === 'security' ? 'active' : ''}`}*!/*/}
+                    {/*    /!*    onClick={() => setActiveTab('security')}*!/*/}
+                    {/*    /!*>*!/*/}
+                    {/*    /!*    <ShieldCheck size={18} />*!/*/}
+                    {/*    /!*    <span>Bảo mật</span>*!/*/}
+                    {/*    /!*</button>*!/*/}
+                    {/*    /!*<button *!/*/}
+                    {/*    /!*    className={`tab-link ${activeTab === 'activity' ? 'active' : ''}`}*!/*/}
+                    {/*    /!*    onClick={() => setActiveTab('activity')}*!/*/}
+                    {/*    /!*>*!/*/}
+                    {/*    /!*    <Activity size={18} />*!/*/}
+                    {/*    /!*    <span>Hoạt động</span>*!/*/}
+                    {/*    /!*</button>*!/*/}
+                    {/*</nav>*/}
 
                     <div className="tab-content-area">
                         {renderTabContent()}
