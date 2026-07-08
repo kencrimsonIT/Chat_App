@@ -24,14 +24,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         String path = request.getRequestURI();
-        
+
         if (path.equals("/api/auth/forgot-password")) {
             String clientIp = getClientIP(request);
             Bucket bucket = rateLimitingService.resolveBucket(clientIp);
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-            
+
             if (!probe.isConsumed()) {
                 long waitForRefill = probe.getNanosToWaitForRefill() / 1_000_000_000;
                 response.setStatus(429);
@@ -41,7 +41,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 return;
             }
         }
-        
+
         filterChain.doFilter(request, response);
     }
 

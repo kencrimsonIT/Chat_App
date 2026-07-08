@@ -232,7 +232,7 @@ public class AuthService {
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setIsActive(true); 
+        user.setIsActive(true);
 
         Role client = roleRepository.findByName("ROLE_CLIENT")
                 .orElseThrow(() -> new ResourceNotFoundException("Lỗi hệ thống: Không tìm thấy vai trò ROLE_CLIENT"));
@@ -273,8 +273,8 @@ public class AuthService {
                 .coverUrl(user.getCoverUrl())
                 .message("Đăng nhập thành công")
                 .roles(user.getRoles().stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet()))
+                        .map(Role::getName)
+                        .collect(Collectors.toSet()))
                 .build();
     }
 

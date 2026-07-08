@@ -50,7 +50,7 @@ public class FriendshipService {
             Friendship f = existingFriendship.get();
             // If the relationship was previously declined, allow re-sending a new request
             if (f.getStatus() == Friendship.FriendshipStatus.PENDING ||
-                f.getStatus() == Friendship.FriendshipStatus.ACCEPTED) {
+                    f.getStatus() == Friendship.FriendshipStatus.ACCEPTED) {
                 throw new IllegalArgumentException("Friend request already exists");
             }
             // If it was declined, re-send as PENDING
