@@ -21,7 +21,8 @@ const ChatSidebar = ({
                          activeId,
                          onSelect,
                          onRoomCreated,
-                         onStartChat
+                         onStartChat,
+                         userPresence
                      }) => {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeTab, setActiveTab] = useState("chat"); // 'chat' hoặc 'contacts' hoặc 'settings'
@@ -312,7 +313,7 @@ const ChatSidebar = ({
                             ) : (
                                 <>
                                     <FriendRequestList pendingRequests={pendingRequests} onAccept={handleAccept} onDecline={handleDecline} />
-                                    <FriendsList friends={friends} onStartChat={onStartChat} onBlockUser={handleBlockUser} />
+                                    <FriendsList friends={friends} onStartChat={onStartChat} onBlockUser={handleBlockUser} userPresence={userPresence} />
 
                                     {/* Blocked Users Toggle */}
                                     {blockedUsers.length > 0 && (
