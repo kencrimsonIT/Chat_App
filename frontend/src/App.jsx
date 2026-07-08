@@ -13,11 +13,11 @@ import ChangePasswordPage from "./pages/change-password/ChangePasswordPage";
 import HomePage from "./pages/home/HomePage";
 
 const App = () => {
-  const darkMode = useSelector((state) => state.theme.darkMode);
+  const { darkMode, tokens } = useSelector((state) => state.theme);
 
   return (
     <GoogleOAuthProvider clientId="399351923550-0rbhpo190v1adbibh2tesmahd38v6f9p.apps.googleusercontent.com">
-      <div className={`app-container ${darkMode ? "dark" : "light"}`}>
+      <div className={`app-container ${darkMode ? "dark" : "light"}`} style={tokens}>
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />

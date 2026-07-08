@@ -4,18 +4,15 @@
 $font: "Montserrat Alternates", sans-serif;
 
 :root {
-  --bg-gradient: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
-  --text-color: #ffffff;
+  /* Variables are now injected via inline styles on .app-container from themeSlice */
 }
 
 .dark {
-  --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  --text-color: #e0e0e0;
+  /* Additional dark mode specific app-level classes if needed */
 }
 
 .light {
-  --bg-gradient: linear-gradient(135deg, #944dff 0%, #3b82f6 100%);
-  --text-color: #ffffff;
+  /* Additional light mode specific app-level classes if needed */
 }
 
 body {
