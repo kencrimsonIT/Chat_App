@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../services/axios_instance";
 
 const useLogout = () => {
     const navigate = useNavigate();
+    const { logout: authLogout } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -15,15 +17,9 @@ const useLogout = () => {
             await axiosInstance.post("/auth/logout");
         } catch (err) {
             console.error("Logout failed on server:", err);
-            // Even if the server call fails, we should clear local storage and redirect
+            // Even if the server call fails, we should clear session storage and redirect
         } finally {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("userId");
-            localStorage.removeItem("username");
-            localStorage.removeItem("email");
-            localStorage.removeItem("roles");
-
+            authLogout();
             setLoading(false);
             navigate("/");
         }

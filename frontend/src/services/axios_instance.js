@@ -11,7 +11,7 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
     (config) => {
-        const token = localStorage.getItem("accessToken");
+        const token = sessionStorage.getItem("accessToken");
         if (token) {
             config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -32,10 +32,10 @@ axiosInstance.interceptors.response.use(
         ) {
             originalRequest._retry = true;
 
-            const refreshToken = localStorage.getItem("refreshToken");
+            const refreshToken = sessionStorage.getItem("refreshToken");
 
             if (!refreshToken) {
-                localStorage.clear();
+                sessionStorage.clear();
                 window.location.href = "/login";
                 return Promise.reject(error);
             }
@@ -45,13 +45,13 @@ axiosInstance.interceptors.response.use(
                     refreshToken,
                 });
 
-                localStorage.setItem("accessToken", data.accessToken);
-                localStorage.setItem("refreshToken", data.refreshToken);
+                sessionStorage.setItem("accessToken", data.accessToken);
+                sessionStorage.setItem("refreshToken", data.refreshToken);
 
                 originalRequest.headers["Authorization"] = `Bearer ${data.accessToken}`;
                 return axiosInstance(originalRequest);
             } catch (refreshError) {
-                localStorage.clear();
+                sessionStorage.clear();
                 window.location.href = "/login";
                 return Promise.reject(refreshError);
             }

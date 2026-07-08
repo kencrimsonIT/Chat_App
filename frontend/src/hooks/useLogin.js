@@ -1,9 +1,11 @@
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../services/axios_instance";
 
 const useLogin = () => {
     const navigate = useNavigate();
+    const { login: authLogin } = useAuth();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -13,19 +15,14 @@ const useLogin = () => {
         setError(null);
 
         try {
-            const {data} = await axiosInstance.post("/auth/login", {
+            const { data } = await axiosInstance.post("/auth/login", {
                 username,
                 password,
             });
 
-            localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
-            localStorage.setItem("userId", data.userId);
-            localStorage.setItem("username", data.username);
-            localStorage.setItem("email", data.email);
-            localStorage.setItem("roles", JSON.stringify(data.roles));
+            authLogin(data);
 
-            if (data.roles.includes("ROLE_ADMIN")) {
+            if (data.roles?.includes("ROLE_ADMIN")) {
                 navigate("/admin");
             } else {
                 navigate("/chat");
@@ -38,7 +35,7 @@ const useLogin = () => {
         }
     };
 
-    return {login, loading, error};
+    return { login, loading, error };
 };
 
 export default useLogin;

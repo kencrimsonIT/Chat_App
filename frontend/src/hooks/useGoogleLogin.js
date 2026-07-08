@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../services/axios_instance";
 
 const useGoogleLogin = () => {
     const navigate = useNavigate();
+    const { login: authLogin } = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -16,14 +18,9 @@ const useGoogleLogin = () => {
                 accessToken,
             });
 
-            localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
-            localStorage.setItem("userId", data.userId);
-            localStorage.setItem("username", data.username);
-            localStorage.setItem("email", data.email);
-            localStorage.setItem("roles", JSON.stringify(data.roles));
+            authLogin(data);
 
-            if (data.roles.includes("ROLE_ADMIN")) {
+            if (data.roles?.includes("ROLE_ADMIN")) {
                 navigate("/admin");
             } else {
                 navigate("/chat");
