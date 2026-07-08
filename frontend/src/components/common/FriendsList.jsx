@@ -1,7 +1,14 @@
 import React from "react";
 import { MessageSquare, Ban } from "lucide-react";
 
-const FriendList = ({ friends, onStartChat, onBlockUser }) => {
+const FriendList = ({ friends, onStartChat, onBlockUser, userPresence = {} }) => {
+    const getFriendStatus = (friendId) => {
+        const presence = userPresence[friendId];
+        if (!presence) return 'Offline';
+        if (presence.status === 'ONLINE') return 'Online';
+        if (presence.status === 'AWAY') return 'Away';
+        return 'Offline';
+    };
     const handleBlock = (e, userId) => {
         e.stopPropagation();
         if (window.confirm("Bạn có chắc muốn chặn người dùng này?")) {
@@ -24,7 +31,7 @@ const FriendList = ({ friends, onStartChat, onBlockUser }) => {
                                 />
                                 <div className="contact-details">
                                     <p className="name">{friend.fullName || friend.username}</p>
-                                    <p className="status-text">Active</p>
+                                    <p className={`status-text ${getFriendStatus(friend.id).toLowerCase()}`}>{getFriendStatus(friend.id)}</p>
                                 </div>
                             </div>
                             <div className="action-buttons">
