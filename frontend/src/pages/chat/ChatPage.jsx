@@ -6,20 +6,22 @@ import "./ChatPage.scss";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
 import chatService from "../../services/chatService";
 import roomService from "../../services/roomService";
-import { connectWebSocket, subscribeToRoom, sendChatMessage, disconnectWebSocket } from "../../websocket/socket";
+import { connectWebSocket, subscribeToRoom, sendChatMessage, disconnectWebSocket, subscribeToUserPresence, sendUserStatus } from "../../websocket/socket";
 
 const ChatPage = () => {
     const darkMode = useSelector((state) => state.theme.darkMode);
     const [activeChatId, setActiveChatId] = useState(null);
     const [conversations, setConversations] = useState([]);
-    const [roomDetails, setRoomDetails] = useState({}); // { roomId: { type, name, members, ... } }
+    const [roomDetails, setRoomDetails] = useState({});
     const [messages, setMessages] = useState([]);
     const [isMessagesLoading, setIsMessagesLoading] = useState(false);
     const [socketConnected, setSocketConnected] = useState(false);
+    const [userPresence, setUserPresence] = useState({});
 
     const userId = localStorage.getItem("userId");
     const username = localStorage.getItem("username");
     const subscriptionRef = useRef(null);
+    const presenceSubscriptionRef = useRef(null);
 
     // Initial load: Fetch rooms and connect WebSocket
     useEffect(() => {
@@ -58,38 +60,154 @@ const ChatPage = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeChatId, socketConnected]);
 
+    // Subscribe to user presence changes
+    useEffect(() => {
+        if (socketConnected) {
+            presenceSubscriptionRef.current = subscribeToUserPresence((presence) => {
+                setUserPresence(prev => ({
+                    ...prev,
+                    [presence.userId]: {
+                        status: presence.status,
+                        lastSeen: presence.timestamp
+                    }
+                }));
+            });
+
+            return () => {
+                if (presenceSubscriptionRef.current) {
+                    presenceSubscriptionRef.current.unsubscribe();
+                }
+            };
+        }
+    }, [socketConnected]);
+
+    // Notify server when component mounts (user goes online)
+    useEffect(() => {
+        if (socketConnected && userId) {
+            // Delay để đảm bảo WebSocket đã sẵn sàng
+            const timer = setTimeout(() => {
+                sendUserStatus(userId, 'ONLINE');
+            }, 500);
+
+            // Handle page visibility - pause when tab is not visible
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    sendUserStatus(userId, 'AWAY');
+                } else {
+                    sendUserStatus(userId, 'ONLINE');
+                }
+            };
+
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            return () => {
+                clearTimeout(timer);
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+            };
+        }
+    }, [socketConnected, userId]);
+
+    // Helper function to check if user is online
+    const isUserOnline = (checkUserId) => {
+        return userPresence[checkUserId]?.status === 'ONLINE';
+    };
+
+    // Helper function to get last seen time
+    const getLastSeenTime = (checkUserId) => {
+        const presence = userPresence[checkUserId];
+        if (!presence) return null;
+
+        if (presence.status === 'ONLINE') return null;
+
+        const lastSeen = new Date(presence.lastSeen);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - lastSeen) / 60000);
+
+        if (diffMinutes < 1) return 'Vừa xong';
+        if (diffMinutes < 60) return `${diffMinutes}m trước`;
+        if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)}h trước`;
+        return `${Math.floor(diffMinutes / 1440)}d trước`;
+    };
+
+    // Update conversations with online status
+    useEffect(() => {
+        setConversations(prev => prev.map(conv => {
+            if (conv.type === 'PRIVATE') {
+                const otherMember = roomDetails[conv.id]?.members?.find(
+                    m => m.userId.toString() !== userId.toString()
+                );
+
+                if (otherMember) {
+                    return {
+                        ...conv,
+                        online: isUserOnline(otherMember.userId),
+                        lastSeenTime: getLastSeenTime(otherMember.userId)
+                    };
+                }
+            }
+            return conv;
+        }));
+    }, [userPresence, roomDetails, userId]);
+
     const fetchRooms = async () => {
         try {
             const rooms = await chatService.getMyRooms();
-            // Map Room entity to conversation format expected by Sidebar
+
+            // Fetch room details cho tất cả rooms
+            const detailsMap = {};
+            for (const room of rooms) {
+                try {
+                    const detail = await roomService.getRoomDetails(room.id);
+                    detailsMap[room.id] = detail;
+                } catch (err) {
+                    console.error("Failed to fetch room details:", err);
+                }
+            }
+            setRoomDetails(prev => ({ ...prev, ...detailsMap }));
+
+            // Format rooms với đúng tên và avatar
             const formattedRooms = rooms.map(room => ({
                 id: room.id,
-                name: room.name || `Phòng ${room.id}`,
+                name: getConversationName(room, detailsMap[room.id]),
                 type: room.type || "PRIVATE",
+                avatar: getConversationAvatar(room, detailsMap[room.id]),
                 lastMessage: "...",
                 time: room.createdAt ? new Date(room.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
                 unread: 0,
                 online: false,
-                avatar: null
             }));
             setConversations(formattedRooms);
-
-            // Fetch room details for groups to get member info
-            const detailsMap = {};
-            for (const room of rooms) {
-                if (room.type === "GROUP") {
-                    try {
-                        const detail = await roomService.getRoomDetails(room.id);
-                        detailsMap[room.id] = detail;
-                    } catch (err) {
-                        console.error("Failed to fetch room details:", err);
-                    }
-                }
-            }
-            setRoomDetails(prev => ({ ...prev, ...detailsMap }));
         } catch (err) {
             console.error("Failed to fetch rooms", err);
         }
+    };
+
+    const getConversationName = (room, detail) => {
+        if (room.type === "GROUP") {
+            return room.name;
+        }
+
+        // Cho PRIVATE room, lấy tên đối phương
+        if (room.type === "PRIVATE" && detail?.members) {
+            const otherMember = detail.members.find(m => m.userId.toString() !== userId.toString());
+            return otherMember?.fullName || otherMember?.username || room.name || "Private Chat";
+        }
+
+        return room.name || "Private Chat";
+    };
+
+    const getConversationAvatar = (room, detail) => {
+        if (room.type === "GROUP") {
+            return null;
+        }
+
+        // Cho PRIVATE room, lấy avatar đối phương
+        if (room.type === "PRIVATE" && detail?.members) {
+            const otherMember = detail.members.find(m => m.userId.toString() !== userId.toString());
+            return otherMember?.avatarUrl || null;
+        }
+
+        return null;
     };
 
     const fetchHistory = async (roomId) => {
@@ -116,10 +234,9 @@ const ChatPage = () => {
     const handleStartChatWithFriend = async (friend) => {
         try {
             const targetId = typeof friend === 'object' ? friend.id : friend;
-            const friendName = typeof friend === 'object' ? (friend.fullName || friend.username) : `Phòng chat`;
-            const friendAvatar = typeof friend === 'object' ? friend.avatarUrl : null;
 
             const room = await chatService.getPrivateRoom(targetId);
+            const detail = await roomService.getRoomDetails(room.id);
 
             setConversations(prev => {
                 const isExist = prev.some(c => c.id === room.id);
@@ -127,9 +244,9 @@ const ChatPage = () => {
 
                 return [...prev, {
                     id: room.id,
-                    name: room.name || friendName,
+                    name: getConversationName(room, detail),
                     type: "PRIVATE",
-                    avatar: friendAvatar,
+                    avatar: getConversationAvatar(room, detail),
                     lastMessage: "Bắt đầu cuộc trò chuyện",
                     time: "",
                     unread: 0,
@@ -137,6 +254,7 @@ const ChatPage = () => {
                 }];
             });
 
+            setRoomDetails(prev => ({ ...prev, [room.id]: detail }));
             setActiveChatId(room.id);
         } catch (err) {
             console.error("Không thể mở phòng trò chuyện:", err);
@@ -144,7 +262,6 @@ const ChatPage = () => {
     };
 
     const handleRoomCreated = async (newRoom) => {
-        // newRoom comes from CreateGroupModal -> roomService.createGroupRoom response (RoomDetailDTO)
         setConversations(prev => {
             const isExist = prev.some(c => c.id === newRoom.id);
             if (isExist) return prev;
@@ -167,15 +284,12 @@ const ChatPage = () => {
 
     const handleGroupInfoUpdate = async (result) => {
         if (result?.left) {
-            // User left the group — go back to no active chat
             setActiveChatId(null);
-            // Refresh the room list
             fetchRooms();
         } else {
-            // Group was updated (members changed, etc.)
             if (activeChatId) {
                 await fetchRoomDetails(activeChatId);
-                fetchRooms(); // Refresh sidebar
+                fetchRooms();
             }
         }
     };
@@ -219,11 +333,17 @@ const ChatPage = () => {
 
         try {
             await chatService.uploadFile(file, activeChatId, "", onProgress);
-            // The uploaded message will arrive via WebSocket broadcast
         } catch (err) {
             console.error("File upload failed:", err);
             throw err;
         }
+    };
+
+    const getSenderAvatar = (senderId) => {
+        if (!roomDetails[activeChatId]?.members) return defaultPfp;
+
+        const member = roomDetails[activeChatId].members.find(m => m.userId.toString() === senderId.toString());
+        return member?.avatarUrl || defaultPfp;
     };
 
     // Transform messages to the format expected by MessageItem
@@ -233,7 +353,9 @@ const ChatPage = () => {
         time: msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "",
         senderId: msg.senderId.toString() === userId.toString() ? "me" : "them",
         senderUsername: msg.senderUsername,
-        senderAvatar: defaultPfp,
+        senderAvatar: msg.senderId.toString() === userId.toString()
+            ? (localStorage.getItem("userAvatar") || defaultPfp)
+            : getSenderAvatar(msg.senderId),
         type: msg.type,
         fileUrl: msg.fileUrl,
         fileName: msg.fileName,
@@ -251,6 +373,7 @@ const ChatPage = () => {
                     onSelect={setActiveChatId}
                     onRoomCreated={handleRoomCreated}
                     onStartChat={handleStartChatWithFriend}
+                    userPresence={userPresence}
                 />
                 <ChatWindow
                     activeChat={activeChat}
@@ -263,6 +386,7 @@ const ChatPage = () => {
                     onSendFile={handleSendFile}
                     onSendGif={handleSendGif}
                     onGroupInfoUpdate={handleGroupInfoUpdate}
+                    userPresence={userPresence}
                 />
             </div>
         </div>
