@@ -2,30 +2,45 @@ import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 
 let stompClient = null;
+let connectionPromise = null;
 
 export const connectWebSocket = (onConnected) => {
-    // Create a new STOMP client
-    stompClient = new Client({
-        webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000,
-        debug: (str) => {
-            console.log(str);
-        },
+    // Nếu đã đang kết nối, không kết nối lại
+    if (connectionPromise) {
+        return connectionPromise;
+    }
+
+    connectionPromise = new Promise((resolve) => {
+        // Create a new STOMP client
+        stompClient = new Client({
+            webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+            reconnectDelay: 5000,
+            heartbeatIncoming: 4000,
+            heartbeatOutgoing: 4000,
+            debug: (str) => {
+                console.log(str);
+            },
+        });
+
+        stompClient.onConnect = (frame) => {
+            console.log('Connected: ' + frame);
+            if (onConnected) onConnected();
+            resolve();
+        };
+
+        stompClient.onStompError = (frame) => {
+            console.error('Broker reported error: ' + frame.headers['message']);
+            console.error('Additional details: ' + frame.body);
+        };
+
+        stompClient.activate();
     });
 
-    stompClient.onConnect = (frame) => {
-        console.log('Connected: ' + frame);
-        if (onConnected) onConnected();
-    };
+    return connectionPromise;
+};
 
-    stompClient.onStompError = (frame) => {
-        console.error('Broker reported error: ' + frame.headers['message']);
-        console.error('Additional details: ' + frame.body);
-    };
-
-    stompClient.activate();
+export const isWebSocketConnected = () => {
+    return stompClient && stompClient.connected;
 };
 
 export const subscribeToFriendshipNotifications = (userId, onNotificationReceived) => {
@@ -36,6 +51,57 @@ export const subscribeToFriendshipNotifications = (userId, onNotificationReceive
             onNotificationReceived(JSON.parse(message.body));
         }
     });
+};
+
+export const subscribeToUserStatus = (userId, callback) => {
+    if (!stompClient || !stompClient.connected) {
+        console.warn("WebSocket not connected yet");
+        return null;
+    }
+
+    return stompClient.subscribe(
+        `/user/${userId}/status`,
+        (message) => {
+            const status = JSON.parse(message.body);
+            callback(status);
+        }
+    );
+};
+
+export const subscribeToUserPresence = (callback) => {
+    if (!stompClient || !stompClient.connected) {
+        console.warn("WebSocket not connected yet");
+        return null;
+    }
+
+    return stompClient.subscribe(
+        `/topic/presence`,
+        (message) => {
+            const userPresence = JSON.parse(message.body);
+            callback(userPresence);
+        }
+    );
+};
+
+// Gửi status khi user online/offline
+export const sendUserStatus = (userId, status) => {
+    if (!stompClient || !stompClient.connected) {
+        console.warn("WebSocket not connected, cannot send user status");
+        return;
+    }
+
+    try {
+        stompClient.publish({
+            destination: '/app/user-status',
+            body: JSON.stringify({
+                userId: userId,
+                status: status, // 'ONLINE' hoặc 'OFFLINE'
+                timestamp: new Date().toISOString()
+            })
+        });
+    } catch (error) {
+        console.error("Error sending user status:", error);
+    }
 };
 
 export const subscribeToRoom = (roomId, onMessageReceived) => {
@@ -63,5 +129,7 @@ export const disconnectWebSocket = () => {
     if (stompClient !== null) {
         stompClient.deactivate();
     }
+    stompClient = null;
+    connectionPromise = null;
     console.log("Disconnected");
 };
