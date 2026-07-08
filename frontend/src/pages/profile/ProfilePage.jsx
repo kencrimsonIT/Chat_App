@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
-import { 
-    Camera, 
-    User, 
-    Mail, 
-    Phone, 
-    MapPin, 
-    Calendar, 
+import {
+    Camera,
+    User,
+    Mail,
+    Phone,
+    MapPin,
+    Calendar,
     Edit3,
     Check,
     X,
@@ -24,11 +24,11 @@ const ProfilePage = () => {
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
     const [saving, setSaving] = useState(false);
-    
+
     const avatarInputRef = useRef(null);
     const coverInputRef = useRef(null);
 
-        // Raw user data from API (no display-placeholder translations)
+    // Raw user data from API (no display-placeholder translations)
     const [rawUser, setRawUser] = useState(null);
 
     const [editForm, setEditForm] = useState({
@@ -247,19 +247,19 @@ const ProfilePage = () => {
 
     return (
         <div className={`profile-page-container ${darkMode ? "dark-theme" : ""}`}>
-            <input 
-                type="file" 
-                ref={avatarInputRef} 
-                onChange={handleAvatarChange} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
+            <input
+                type="file"
+                ref={avatarInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                style={{ display: 'none' }}
             />
-            <input 
-                type="file" 
-                ref={coverInputRef} 
-                onChange={handleCoverChange} 
-                accept="image/*" 
-                style={{ display: 'none' }} 
+            <input
+                type="file"
+                ref={coverInputRef}
+                onChange={handleCoverChange}
+                accept="image/*"
+                style={{ display: 'none' }}
             />
 
             <div className="profile-card">
@@ -271,8 +271,8 @@ const ProfilePage = () => {
                         ) : (
                             <div className="cover-placeholder"></div>
                         )}
-                        <button 
-                            className="edit-cover-btn" 
+                        <button
+                            className="edit-cover-btn"
                             onClick={handleCoverClick}
                             disabled={uploadingCover}
                         >
@@ -280,13 +280,13 @@ const ProfilePage = () => {
                             <span>{uploadingCover ? "Đang tải..." : "Thay đổi ảnh nền"}</span>
                         </button>
                     </div>
-                    
+
                     <div className="header-main">
                         <div className="avatar-wrapper">
                             <div className="avatar-container">
                                 <img src={userData.avatar} alt="Avatar" />
-                                <button 
-                                    className="change-avatar-btn" 
+                                <button
+                                    className="change-avatar-btn"
                                     onClick={handleAvatarClick}
                                     disabled={uploadingAvatar}
                                 >

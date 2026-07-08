@@ -23,7 +23,7 @@ const useLogout = () => {
             localStorage.removeItem("username");
             localStorage.removeItem("email");
             localStorage.removeItem("roles");
-            
+
             setLoading(false);
             navigate("/");
         }

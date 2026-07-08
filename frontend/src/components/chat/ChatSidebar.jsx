@@ -346,9 +346,9 @@ const ChatSidebar = ({
                             <button onClick={() => dispatch(toggleTheme())} className="settings-item">
                                 {darkMode ? <Sun size={20} /> : <Moon size={20} />} <span>Giao diện: {darkMode ? "Sáng" : "Tối"}</span>
                             </button>
-                            <button className="settings-item">
-                                <Globe size={20} /> <span>Ngôn ngữ: Tiếng Việt</span>
-                            </button>
+                            {/*<button className="settings-item">*/}
+                            {/*    <Globe size={20} /> <span>Ngôn ngữ: Tiếng Việt</span>*/}
+                            {/*</button>*/}
                             <button onClick={logout} className="settings-item logout-btn">
                                 <LogOut size={20} /> <span>Đăng xuất</span>
                             </button>

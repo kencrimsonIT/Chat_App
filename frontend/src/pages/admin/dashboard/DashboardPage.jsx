@@ -3,13 +3,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { 
     LayoutDashboard, 
     Users, 
-    Settings, 
-    LogOut, 
+    LogOut,
     MessageCircle, 
     Sun, 
     Moon, 
     Search, 
-    Bell,
     Activity,
     Shield,
     Loader2,
@@ -102,18 +100,6 @@ const DashboardPage = () => {
                             <span>Người dùng</span>
                         </button>
                     </div>
-
-                    <div className="nav-group">
-                        <p className="group-title">Hệ thống</p>
-                        <a href="#" className="nav-item">
-                            <Activity size={20} />
-                            <span>Hoạt động</span>
-                        </a>
-                        <a href="#" className="nav-item">
-                            <Settings size={20} />
-                            <span>Cài đặt</span>
-                        </a>
-                    </div>
                 </nav>
 
                 <div className="sidebar-footer">
@@ -143,10 +129,6 @@ const DashboardPage = () => {
                             onClick={() => dispatch(toggleTheme())}
                         >
                             {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                        </button>
-                        <button className="icon-btn notification">
-                            <Bell size={20} />
-                            <span className="badge"></span>
                         </button>
                         <div className="user-profile">
                             <img src={defaultPfp} alt="Admin" />
