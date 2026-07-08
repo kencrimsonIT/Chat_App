@@ -102,7 +102,11 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
         const presence = userPresence?.[otherMemberId];
 
         if (presence?.status === 'ONLINE') {
-            return 'Đang hoạt động';
+            return 'Online';
+        }
+
+        if (presence?.status === 'AWAY') {
+            return 'Away';
         }
 
         if (presence?.lastSeen) {
@@ -116,12 +120,17 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
             return `Hoạt động ${Math.floor(diffMinutes / 1440)}d trước`;
         }
 
-        return 'Ngoại tuyến';
+        return 'Offline';
     };
 
     const isOtherUserOnline = () => {
         const otherMemberId = getOtherMemberId();
         return otherMemberId && userPresence?.[otherMemberId]?.status === 'ONLINE';
+    };
+
+    const isOtherUserAway = () => {
+        const otherMemberId = getOtherMemberId();
+        return otherMemberId && userPresence?.[otherMemberId]?.status === 'AWAY';
     };
 
     return (
@@ -137,13 +146,14 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                             ) : (
                                 <>
                                     <img src={activeChat.avatar || defaultPfp} alt={activeChat.name} />
-                                    {isOtherUserOnline() && <span className="status-dot"></span>}
+                                    {isOtherUserOnline() && <span className="status-dot online"></span>}
+                                    {isOtherUserAway() && <span className="status-dot away"></span>}
                                 </>
                             )}
                         </div>
                         <div className="user-info">
                             <h3>{activeChat.name}</h3>
-                            <p className="status">
+                            <p className={`status ${!isGroup ? getOtherUserStatus()?.toLowerCase() : ''}`}>
                                 {isGroup
                                     ? `${memberCount} thành viên`
                                     : getOtherUserStatus()
