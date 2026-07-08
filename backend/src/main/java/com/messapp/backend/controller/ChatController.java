@@ -43,6 +43,12 @@ public class ChatController {
         messagingTemplate.convertAndSend("/topic/room/" + messageDTO.getRoomId(), savedMessage);
     }
 
+    @MessageMapping("/user-status")
+    public void handleUserStatus(@Payload Map<String, Object> statusPayload) {
+        // Broadcast user status to all connected clients
+        messagingTemplate.convertAndSend("/topic/presence", (Object) statusPayload);
+    }
+
     @GetMapping("/api/chat/history/{roomId}")
     public ResponseEntity<List<MessageDTO>> getChatHistory(
             @PathVariable Long roomId,
