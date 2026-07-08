@@ -6,7 +6,7 @@ import ChatInput from "./ChatInput";
 import GroupInfoPanel from "./GroupInfoPanel";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
 
-const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onSendFile, onSendGif, onGroupInfoUpdate, isLoading }) => {
+const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onSendFile, onSendGif, onGroupInfoUpdate, isLoading, userPresence }) => {
     const scrollRef = useRef();
     const [showGroupInfo, setShowGroupInfo] = useState(false);
 
@@ -85,6 +85,45 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
     const isGroup = activeChat.type === "GROUP";
     const memberCount = roomDetail?.members?.length || 0;
 
+    const getOtherMemberId = () => {
+        if (isGroup) return null;
+        const otherMember = roomDetail?.members?.find(
+            m => m.userId.toString() !== currentUserId.toString()
+        );
+        return otherMember?.userId;
+    };
+
+    const getOtherUserStatus = () => {
+        if (isGroup) return null;
+
+        const otherMemberId = getOtherMemberId();
+        if (!otherMemberId) return null;
+
+        const presence = userPresence?.[otherMemberId];
+
+        if (presence?.status === 'ONLINE') {
+            return 'Đang hoạt động';
+        }
+
+        if (presence?.lastSeen) {
+            const lastSeen = new Date(presence.lastSeen);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - lastSeen) / 60000);
+
+            if (diffMinutes < 1) return 'Vừa xong';
+            if (diffMinutes < 60) return `Hoạt động ${diffMinutes}m trước`;
+            if (diffMinutes < 1440) return `Hoạt động ${Math.floor(diffMinutes / 60)}h trước`;
+            return `Hoạt động ${Math.floor(diffMinutes / 1440)}d trước`;
+        }
+
+        return 'Ngoại tuyến';
+    };
+
+    const isOtherUserOnline = () => {
+        const otherMemberId = getOtherMemberId();
+        return otherMemberId && userPresence?.[otherMemberId]?.status === 'ONLINE';
+    };
+
     return (
         <>
             <main className={`chat-window ${showGroupInfo && isGroup ? 'with-side-panel' : ''}`}>
@@ -96,16 +135,19 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                                     <span>{(activeChat.name || "G")[0].toUpperCase()}</span>
                                 </div>
                             ) : (
-                                <img src={activeChat.avatar || defaultPfp} alt={activeChat.name} />
+                                <>
+                                    <img src={activeChat.avatar || defaultPfp} alt={activeChat.name} />
+                                    {isOtherUserOnline() && <span className="status-dot"></span>}
+                                </>
                             )}
-                            {activeChat.online && !isGroup && <span className="status-dot"></span>}
                         </div>
                         <div className="user-info">
                             <h3>{activeChat.name}</h3>
                             <p className="status">
                                 {isGroup
                                     ? `${memberCount} thành viên`
-                                    : (activeChat.online ? 'Đang hoạt động' : 'Ngoại tuyến')}
+                                    : getOtherUserStatus()
+                                }
                             </p>
                         </div>
                     </div>
@@ -120,7 +162,6 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                                 <Users size={20} />
                             </button>
                         )}
-                        {/*<button className="icon-btn"><Info size={20} /></button>*/}
                     </div>
                 </header>
 
@@ -145,6 +186,7 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                     currentUserName={currentUsername}
                     onClose={() => setShowGroupInfo(false)}
                     onUpdate={onGroupInfoUpdate}
+                    userPresence={userPresence}
                 />
             )}
         </>
