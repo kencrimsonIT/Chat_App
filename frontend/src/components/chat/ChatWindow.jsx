@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Info, MoreHorizontal, Users } from "lucide-react";
+import { Info, MoreHorizontal, Users, Phone, Video } from "lucide-react";
 import Skeleton from "react-loading-skeleton";
 import MessageItem from "./MessageItem";
 import ChatInput from "./ChatInput";
 import GroupInfoPanel from "./GroupInfoPanel";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
+import { useCall } from "../../context/CallContext";
 
 const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, messages, onSendMessage, onSendFile, onSendGif, onGroupInfoUpdate, isLoading, userPresence }) => {
     const scrollRef = useRef();
     const [showGroupInfo, setShowGroupInfo] = useState(false);
+    const { startCall } = useCall();
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -93,6 +95,25 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
         return otherMember?.userId;
     };
 
+    const getOtherMember = () => {
+        if (isGroup) return null;
+        return roomDetail?.members?.find(
+            m => m.userId.toString() !== currentUserId.toString()
+        );
+    };
+
+    const handleStartCall = (type) => {
+        const otherMember = getOtherMember();
+        if (!otherMember) return;
+        startCall({
+            roomId: activeChat.id,
+            calleeId: otherMember.userId,
+            calleeName: otherMember.fullName || otherMember.username || activeChat.name,
+            calleeAvatar: otherMember.avatarUrl || "",
+            type,
+        });
+    };
+
     const getOtherUserStatus = () => {
         if (isGroup) return null;
 
@@ -163,6 +184,17 @@ const ChatWindow = ({ activeChat, roomDetail, currentUserId, currentUsername, me
                     </div>
 
                     <div className="header-actions">
+                        {!isGroup && (
+                            <button className="icon-btn" title="Cuộc gọi thoại" onClick={() => handleStartCall("AUDIO")}>
+                                <Phone size={20} />
+                            </button>
+                        )}
+                        {!isGroup && (
+                            <button className="icon-btn" title="Cuộc gọi video" onClick={() => handleStartCall("VIDEO")}>
+                                <Video size={20} />
+                            </button>
+                        )}
+
                         {isGroup && (
                             <button
                                 className={`icon-btn ${showGroupInfo ? 'active' : ''}`}
