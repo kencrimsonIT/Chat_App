@@ -2,14 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import ChatSidebar from "../../components/chat/ChatSidebar";
 import ChatWindow from "../../components/chat/ChatWindow";
+import CallOverlay from "../../components/call/CallOverlay";
+import { CallProvider } from "../../context/CallContext";
 import "./ChatPage.scss";
 import defaultPfp from "../../assets/images/default-pfp.jpg";
 import chatService from "../../services/chatService";
 import roomService from "../../services/roomService";
 import { connectWebSocket, subscribeToRoom, sendChatMessage, disconnectWebSocket, subscribeToUserPresence, sendUserStatus } from "../../websocket/socket";
+import {useAuth} from "../../context/AuthContext";
 
 const ChatPage = () => {
     const darkMode = useSelector((state) => state.theme.darkMode);
+    const { user } = useAuth();
+
     const [activeChatId, setActiveChatId] = useState(null);
     const [conversations, setConversations] = useState([]);
     const [roomDetails, setRoomDetails] = useState({});
@@ -18,23 +23,28 @@ const ChatPage = () => {
     const [socketConnected, setSocketConnected] = useState(false);
     const [userPresence, setUserPresence] = useState({});
 
-    const userId = localStorage.getItem("userId");
-    const username = localStorage.getItem("username");
+    const userId = user?.userId;
+    const username = user?.username;
     const subscriptionRef = useRef(null);
     const presenceSubscriptionRef = useRef(null);
 
     // Initial load: Fetch rooms and connect WebSocket
     useEffect(() => {
-        fetchRooms();
+        if (userId) {
+            setConversations([]);
+            setMessages([]);
+            setRoomDetails([]);
+            fetchRooms();
+        }
+
         connectWebSocket(() => {
             setSocketConnected(true);
-        });
+        })
 
         return () => {
             disconnectWebSocket();
-        };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        }
+    }, [userId]);
 
     // Handle room selection and history loading
     useEffect(() => {
@@ -80,6 +90,19 @@ const ChatPage = () => {
             };
         }
     }, [socketConnected]);
+
+    //Disconnect old WebSocket when change userId
+    useEffect(() => {
+        return () => {
+            if (subscriptionRef.current) {
+                subscriptionRef.current.unsubscribe();
+            }
+            if (presenceSubscriptionRef.current) {
+                presenceSubscriptionRef.current.unsubscribe();
+            }
+            disconnectWebSocket();
+        };
+    }, [userId]);
 
     // Notify server when component mounts (user goes online)
     useEffect(() => {
@@ -364,32 +387,35 @@ const ChatPage = () => {
     }));
 
     return (
-        <div className={`chat-page-container ${darkMode ? "dark-theme" : ""}`}>
-            <div className="chat-layout">
-                <ChatSidebar
-                    currentUser={{ id: Number(userId), username }}
-                    conversations={conversations}
-                    activeId={activeChatId}
-                    onSelect={setActiveChatId}
-                    onRoomCreated={handleRoomCreated}
-                    onStartChat={handleStartChatWithFriend}
-                    userPresence={userPresence}
-                />
-                <ChatWindow
-                    activeChat={activeChat}
-                    roomDetail={activeRoomDetail}
-                    currentUserId={Number(userId)}
-                    currentUsername={username}
-                    messages={formattedMessages}
-                    isLoading={isMessagesLoading}
-                    onSendMessage={handleSendMessage}
-                    onSendFile={handleSendFile}
-                    onSendGif={handleSendGif}
-                    onGroupInfoUpdate={handleGroupInfoUpdate}
-                    userPresence={userPresence}
-                />
+        <CallProvider>
+            <div className={`chat-page-container ${darkMode ? "dark-theme" : ""}`}>
+                <div className="chat-layout">
+                    <ChatSidebar
+                        currentUser={{ id: Number(userId), username }}
+                        conversations={conversations}
+                        activeId={activeChatId}
+                        onSelect={setActiveChatId}
+                        onRoomCreated={handleRoomCreated}
+                        onStartChat={handleStartChatWithFriend}
+                        userPresence={userPresence}
+                    />
+                    <ChatWindow
+                        activeChat={activeChat}
+                        roomDetail={activeRoomDetail}
+                        currentUserId={Number(userId)}
+                        currentUsername={username}
+                        messages={formattedMessages}
+                        isLoading={isMessagesLoading}
+                        onSendMessage={handleSendMessage}
+                        onSendFile={handleSendFile}
+                        onSendGif={handleSendGif}
+                        onGroupInfoUpdate={handleGroupInfoUpdate}
+                        userPresence={userPresence}
+                    />
+                </div>
+                <CallOverlay />
             </div>
-        </div>
+        </CallProvider>
     );
 };
 
