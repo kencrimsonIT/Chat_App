@@ -125,6 +125,41 @@ export const sendChatMessage = (messageDTO) => {
     }
 };
 
+// ==================== CALL SIGNALING ====================
+
+// Subscribe to call signaling messages for a specific user.
+// The server publishes to /topic/call/{userId}
+export const subscribeToCall = (userId, callback) => {
+    if (!stompClient || !stompClient.connected) {
+        console.warn("WebSocket not connected yet");
+        return null;
+    }
+
+    return stompClient.subscribe(`/topic/call/${userId}`, (message) => {
+        if (message.body) {
+            callback(JSON.parse(message.body));
+        }
+    });
+};
+
+// Publish a call signaling message (INVITE/ACCEPT/DECLINE/CANCEL/BUSY/END/SIGNAL)
+// to /app/call.*
+export const sendCallMessage = (destination, payload) => {
+    if (!stompClient || !stompClient.connected) {
+        console.warn("WebSocket not connected, cannot send call message");
+        return;
+    }
+
+    try {
+        stompClient.publish({
+            destination: `/app/${destination}`,
+            body: JSON.stringify(payload)
+        });
+    } catch (error) {
+        console.error("Error sending call message:", error);
+    }
+};
+
 export const disconnectWebSocket = () => {
     if (stompClient !== null) {
         stompClient.deactivate();
