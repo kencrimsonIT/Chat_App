@@ -1,5 +1,6 @@
 package com.messapp.backend.dto.call;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -29,5 +30,6 @@ public class CallSignalDTO {
     /** WebRTC payload: { "sdp": {...} } or { "candidate": {...} } */
     private Map<String, Object> signal;
 
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
     private LocalDateTime timestamp;
 }
