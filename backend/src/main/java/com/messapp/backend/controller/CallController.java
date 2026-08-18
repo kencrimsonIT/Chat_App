@@ -3,6 +3,8 @@ package com.messapp.backend.controller;
 import com.messapp.backend.dto.call.CallSignalDTO;
 import com.messapp.backend.entity.Call;
 import com.messapp.backend.service.CallService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -26,6 +28,8 @@ import java.util.List;
 @RestController
 public class CallController {
 
+    private static final Logger log = LoggerFactory.getLogger(CallController.class);
+
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
@@ -34,38 +38,62 @@ public class CallController {
 
     @MessageMapping("/call.invite")
     public void invite(@Payload CallSignalDTO dto) {
-        CallSignalDTO processed = callService.registerInvite(dto);
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), processed);
+        try {
+            CallSignalDTO processed = callService.registerInvite(dto);
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), processed);
+        } catch (Exception e) {
+            log.error("Failed to process call invite from {} to {}", dto.getFromUserId(), dto.getToUserId(), e);
+        }
     }
 
     @MessageMapping("/call.accept")
     public void accept(@Payload CallSignalDTO dto) {
-        callService.markAccepted(dto.getCallId());
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        try {
+            callService.markAccepted(dto.getCallId());
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        } catch (Exception e) {
+            log.error("Failed to process call accept for callId={}", dto.getCallId(), e);
+        }
     }
 
     @MessageMapping("/call.decline")
     public void decline(@Payload CallSignalDTO dto) {
-        callService.markDeclined(dto.getCallId());
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        try {
+            callService.markDeclined(dto.getCallId());
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        } catch (Exception e) {
+            log.error("Failed to process call decline for callId={}", dto.getCallId(), e);
+        }
     }
 
     @MessageMapping("/call.cancel")
     public void cancel(@Payload CallSignalDTO dto) {
-        callService.markCancelled(dto.getCallId());
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        try {
+            callService.markCancelled(dto.getCallId());
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        } catch (Exception e) {
+            log.error("Failed to process call cancel for callId={}", dto.getCallId(), e);
+        }
     }
 
     @MessageMapping("/call.busy")
     public void busy(@Payload CallSignalDTO dto) {
-        callService.markBusy(dto.getCallId());
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        try {
+            callService.markBusy(dto.getCallId());
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        } catch (Exception e) {
+            log.error("Failed to process call busy for callId={}", dto.getCallId(), e);
+        }
     }
 
     @MessageMapping("/call.end")
     public void end(@Payload CallSignalDTO dto) {
-        callService.markEnded(dto.getCallId());
-        messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        try {
+            callService.markEnded(dto.getCallId());
+            messagingTemplate.convertAndSend("/topic/call/" + dto.getToUserId(), dto);
+        } catch (Exception e) {
+            log.error("Failed to process call end for callId={}", dto.getCallId(), e);
+        }
     }
 
     @MessageMapping("/call.signal")
