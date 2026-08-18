@@ -377,7 +377,7 @@ const ChatPage = () => {
         senderId: msg.senderId.toString() === userId.toString() ? "me" : "them",
         senderUsername: msg.senderUsername,
         senderAvatar: msg.senderId.toString() === userId.toString()
-            ? (localStorage.getItem("userAvatar") || defaultPfp)
+            ? (sessionStorage.getItem("userAvatar") || defaultPfp)
             : getSenderAvatar(msg.senderId),
         type: msg.type,
         fileUrl: msg.fileUrl,

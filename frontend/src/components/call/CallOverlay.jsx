@@ -38,7 +38,7 @@ const CallOverlay = () => {
 
     if (callState === "idle" || !callInfo) return null;
 
-    const myId = Number(localStorage.getItem("userId"));
+    const myId = Number(sessionStorage.getItem("userId"));
     const amCaller = callInfo.fromUserId === myId;
     const otherName = amCaller ? callInfo.calleeName : callInfo.callerName;
     const otherAvatar = amCaller ? callInfo.calleeAvatar : callInfo.callerAvatar;

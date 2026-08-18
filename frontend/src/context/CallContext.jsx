@@ -11,7 +11,7 @@ const ICE_SERVERS = {
 };
 
 export const CallProvider = ({ children }) => {
-    const userId = Number(localStorage.getItem("userId"));
+    const userId = Number(sessionStorage.getItem("userId"));
 
     const [callState, setCallState] = useState("idle"); // idle | outgoing | incoming | active | ended | declined | busy | missed
     const [callInfo, setCallInfo] = useState(null);
@@ -327,8 +327,8 @@ export const CallProvider = ({ children }) => {
             fromUserId: userId,
             toUserId: calleeId,
             callType: type, // "AUDIO" | "VIDEO"
-            callerName: localStorage.getItem("username") || "User",
-            callerAvatar: localStorage.getItem("userAvatar") || "",
+            callerName: sessionStorage.getItem("username") || "User",
+            callerAvatar: sessionStorage.getItem("userAvatar") || "",
             calleeName: calleeName || "",
             calleeAvatar: calleeAvatar || "",
             timestamp: new Date().toISOString(),
