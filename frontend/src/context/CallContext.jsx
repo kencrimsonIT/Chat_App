@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { connectWebSocket, subscribeToCall, sendCallMessage } from "../websocket/socket";
+import incomingRingtone from "../assets/sounds/incoming_ringtone.mp3";
+import outgoingRingtone from "../assets/sounds/outcoming_ringtone.mp3";
 
 const CallContext = createContext(null);
 
@@ -30,6 +32,8 @@ export const CallProvider = ({ children }) => {
     const pendingSignalsRef = useRef([]);
     const durationTimerRef = useRef(null);
     const resetTimerRef = useRef(null);
+    const incomingRingtoneRef = useRef(null);
+    const outgoingRingtoneRef = useRef(null);
 
     // Keep the current state readable inside async/event handlers (avoids stale closures)
     const callStateRef = useRef(callState);
@@ -37,9 +41,42 @@ export const CallProvider = ({ children }) => {
         callStateRef.current = callState;
     }, [callState]);
 
+    // Play / stop ringtone when call state changes
+    useEffect(() => {
+        if (callState === "incoming") {
+            if (!incomingRingtoneRef.current) {
+                incomingRingtoneRef.current = new Audio(incomingRingtone);
+                incomingRingtoneRef.current.loop = true;
+            }
+            incomingRingtoneRef.current.currentTime = 0;
+            incomingRingtoneRef.current.play().catch(() => {});
+        } else if (callState === "outgoing") {
+            if (!outgoingRingtoneRef.current) {
+                outgoingRingtoneRef.current = new Audio(outgoingRingtone);
+                outgoingRingtoneRef.current.loop = true;
+            }
+            outgoingRingtoneRef.current.currentTime = 0;
+            outgoingRingtoneRef.current.play().catch(() => {});
+        } else {
+            [incomingRingtoneRef, outgoingRingtoneRef].forEach((ref) => {
+                if (ref.current) {
+                    ref.current.pause();
+                    ref.current.currentTime = 0;
+                }
+            });
+        }
+    }, [callState]);
+
     // ==================== Helpers ====================
 
     const cleanupCall = useCallback(() => {
+        // Stop ringtones on cleanup
+        [incomingRingtoneRef, outgoingRingtoneRef].forEach((ref) => {
+            if (ref.current) {
+                ref.current.pause();
+                ref.current.currentTime = 0;
+            }
+        });
         if (peerConnectionRef.current) {
             peerConnectionRef.current.onicecandidate = null;
             peerConnectionRef.current.ontrack = null;
